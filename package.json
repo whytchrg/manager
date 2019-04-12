@@ -1,0 +1,12 @@
+{
+  "name": "wtc",
+  "version": "0.0.1",
+  "description": "data evaluation",
+  "main": "main.js",
+  "repository": "https://github.com/whyturbocharge/wtc.git",
+  "author": "whyturbocharge <44509713+whyturbocharge@users.noreply.github.com>",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^4.1.4"
+  }
+}
