@@ -3,10 +3,17 @@
   "version": "0.0.1",
   "description": "data evaluation",
   "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
   "repository": "https://github.com/whyturbocharge/wtc.git",
   "author": "whyturbocharge <44509713+whyturbocharge@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
-    "electron": "^4.1.4"
+    "chokidar": "^2.1.5",
+    "dotenv": "^7.0.0",
+    "electron": "^4.1.4",
+    "exiftool-vendored": "^8.8.0",
+    "mongodb": "^3.2.3"
   }
 }
