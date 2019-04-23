@@ -3,26 +3,47 @@
 
 const File  = require('../file')
 const Mongo = require('../mongo')
+const Ftp   = require('../ftp')
+const Mysql = require('../mysql')
 
 class Wtc {
 
   constructor(options) {
 
-    this.file = new File({
+    // Classes
+    this.file = new File({ // File
       local: options.local
     })
-    this.mongo = new Mongo({
+    this.mongo = new Mongo({ // Mongo
       url:        options.url,
       db:         options.db,
       collection: options.collection
     })
-    // Booleans
+    this.ftp = new Ftp({ // Ftp
+      ftphost: options.ftphost,
+      ftpport: options.ftpport,
+      ftpuser: options.ftpuser,
+      ftppass: options.ftppass,
+      local:   options.local,
+      remote:  options.remote
+    })
+    this.mysql = new Mysql({ // Mysql
+      http:  options.http,
+      db:    options.db,
+      table: options.collection
+    })
+
+    // File Booleans
     this.fileInit      = false
+    // Mongo Booleans
     this.mongoInit     = false
-    this.mongoProgress = false
-    this.mongoInsert   = false
-    this.mongoUpdate   = false
-    this.mongoDelete   = false
+    this.mongoEvaluate = false
+    // Ftp Booleans
+    this.ftpInit       = false
+    this.ftpProgress   = false
+    // Mysql Booleans
+    this.mysqlInit     = false
+    this.mysqlProgress = false
 
     this.init()
   }
@@ -30,68 +51,80 @@ class Wtc {
   init() {
 
     // --- --- File Events !!
-    this.file.on('init', () => {
+    this.file.on('init', () => { // init
       this.fileInit = true
       console.log(this.file.data.length + ' files')
-      this.evaluate()
+      this.evaluateMongo()
     })
-    this.file.on('add', () => {
-      this.evaluate()
-    })
-    this.file.on('change', () => {
-      this.evaluate()
-    })
-    this.file.on('unlink', () => {
-      this.evaluate()
+    this.file.on('activity', () => { // activity
+      this.evaluateMongo()
     })
 
     // --- --- Mongo Events !!
-    this.mongo.on('init', () => { // --- init
+    this.mongo.on('init', () => { // init
       this.mongoInit = true
-      console.log(this.mongo.data.length + ' mongos')
+      this.evaluateMongo()
+    })
+
+    this.mongo.on('evaluate', () => { // evaluate
+      this.mongoEvaluate = true
       this.evaluate()
     })
-    this.mongo.on('insert', () => { // --- insert
-      this.mongoProgress = true
-      this.mongoInsert   = true
+
+    // --- --- FTP Events !!
+    this.ftp.on('init', () => {
+      this.ftpInit = true
+      this.evaluate()
     })
-    this.mongo.on('inserted', () => {
-      this.mongoInsert   = false
-      if(!this.mongoInsert && !this.mongoUpdate && !this.mongoDelete) {
-        this.mongoProgress = false
-        this.evaluate()
-      }
+
+    this.ftp.on('progress', () => {
+      this.ftpProgress = true
     })
-    this.mongo.on('update', () => { // update
-      this.mongoProgress = true
-      this.mongoUpdate   = true
+
+    this.ftp.on('done', () => {
+      this.ftpProgress = false
+      this.evaluate()
     })
-    this.mongo.on('updated', () => {
-      this.mongoUpdate   = false
-      if(!this.mongoInsert && !this.mongoUpdate && !this.mongoDelete) {
-        this.mongoProgress = false
-        this.evaluate()
-      }
+
+    // --- --- Mysql Events !! --- ---
+
+    this.mysql.on('init', () => {
+      this.mysqlInit = true
+      console.log(this.mysql.data.length + ' mysqls')
+      this.evaluate()
     })
-    this.mongo.on('delete', () => { // delete
-      this.mongoProgress = true
-      this.mongoDelete   = true
+
+    this.mysql.on('progress', () => {
+      this.mysqlProgress = true
     })
-    this.mongo.on('deleted', () => {
-      this.mongoDelete   = false
-      if(!this.mongoInsert && !this.mongoUpdate && !this.mongoDelete) {
-        this.mongoProgress = false
-        this.evaluate()
-      }
+
+    this.mysql.on('done', () => {
+      this.mysqlProgress = false
+      this.evaluate()
     })
 
   } // init
 
+  evaluateMongo() {
+
+    if(this.fileInit && this.mongoInit) {
+      this.mongoEvaluate = false
+      // setTimeout(() => {
+        this.mongo.evaluate(this.file.data)
+      // }, 1)
+
+    }
+
+  } // evaluateMongo
+
   evaluate() {
 
-    // Mongo init
-    if(this.fileInit && this.mongoInit && !this.mongoProgress) {
-      this.mongo.evaluate(this.file.data)
+    if(this.mongoEvaluate && this.ftpInit && !this.ftpProgress) {
+      this.ftp.evaluate(this.mongo.data)
+    }
+
+    if(this.mongoEvaluate && this.mysqlInit && !this.mysqlProgress) {
+      this.mysql.evaluate(this.mongo.data)
     }
 
   } // evaluate

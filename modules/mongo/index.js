@@ -1,247 +1,271 @@
-// *
 
 "use strict"
 
 const Extend   = require('../extend')
-const mongodb  = require('mongodb').MongoClient        // MongoDB
-const exiftool = require("exiftool-vendored").exiftool // ExifTool
-
+const mongodb  = require('mongodb').MongoClient
+const exiftool = require("exiftool-vendored").exiftool
+const gm       = require('gm')
+const fs       = require('fs')
 
 class Mongo extends Extend {
 
   constructor(options) { // url, db, collection
     super()
+    this.lgmk = '⚚ '
+    this.name = 'mongo'
 
-    this.data = [] // Database objects to compare
-    this.off = []
-    this.up = []
-    this.change = []
+    this.data = []
+    this.activity = { progress: false }
 
-    this.client = new mongodb(options.url, {
+    // settings
+    this.dsplyShort = 600
+    this.thumbShort = 100
+    this.dsply = 'display'
+    this.thumb = 'thumbnail'
+
+    this.init(options)
+  }
+
+  init(options) { // init this.collection
+
+    const client = new mongodb(options.url, {
       poolSize: 10,
       useNewUrlParser: true,
       connectTimeoutMS: 300000
     })
-    this.client.connect(function(err, connect) {
+
+    client.connect((err, connect) => {
       if (err) throw err
       this.collection = connect.db(options.db).collection(options.collection)
-      this.init()
-    }.bind(this))
+      this.collection.find({}).toArray((err, data) => {
+        if (err) throw err
+        this.data = data
+        console.log(this.lgmk + this.log_name(this.name, this.data.length))
+        this.emit('init')
+      })
+    })
 
+    let insert = { progress: false }
+    let update = { progress: false }
+    let remove = { progress: false }
+
+    this.on('insert', () => {
+      insert.progress = true
+      this.progress(insert, update, remove)
+    })
+    this.on('inserted', () => {
+      insert.progress = false
+      this.progress(insert, update, remove)
+    })
+    this.on('update', () => {
+      update.progress = true
+      this.progress(insert, update, remove)
+    })
+    this.on('updated', () => {
+      update.progress = false
+      this.progress(insert, update, remove)
+    })
+    this.on('delete', () => {
+      remove.progress = true
+      this.progress(insert, update, remove)
+    })
+    this.on('deleted', () => {
+      remove.progress = false
+      this.progress(insert, update, remove)
+    })
+
+  } // init
+
+  progress(insert, update, remove) {
+    if(!insert.progress && !update.progress && !remove.progress) {
+      this.activity.progress = false
+      this.emit('evaluate')
+    } else {
+      this.activity.progress = true
+    }
   }
 
-  init() {
-    this.collection.find({}).toArray(function(err, data) {
-      if (err) throw err
-      this.data = data
-      this.emit('init') // emit when done
-    }.bind(this))
-  } // init END!
+  evaluate(data) {
+    console.log(this.lgmk + 'evaluate ' + this.name)
 
-  evaluate(data) { // add files to MongoDB
-    console.log('*** evaluate mongo ***')
+    this.getNew(data, this.data, (select) => {
+      console.log(this.lgmk + this.log_name(this.name, select.length) + ' to insert')
+      this.insert(select)
+    })
 
-    // Delete (unlink this.data) aOnly bOnly aOld
-    this.notA(data, this.data, function(select) {
-      console.log(' ** ' + select.length + ' files to delete')
+    this.getChanged(data, this.data, (select) => {
+      console.log(this.lgmk + this.log_name(this.name, select.length) + ' to update')
+      this.update(select)
+    })
+
+    this.getDeleted(data, this.data, (select) => {
+      console.log(this.lgmk + this.log_name(this.name, select.length) + ' to delete')
       this.delete(select)
-    }.bind(this))
+    })
 
-    // get up
-    let f = 0
-    data.forEach(function(file, index, array) {
+  } // evaluate
 
-      if(this.data.length === 0) {
-        this.up.push(file)
-        f++
-
-      } else {
-
-        let test = false
-        let e = 0
-        this.data.forEach(function(mongo, i, a) {
-
-          if(file.filename === mongo.filename) {
-            test = true
-          }
-
-          e++
-          if(e === a.length){
-            if(!test){
-              this.up.push(file)
-            }
-            f++
-          }
-
-        }.bind(this))
-
-      }
-
-      if(f === array.length){
-        console.log(this.up.length + ' files to insert')
-        // console.log(this.up)
-        if(this.up.length > 0)
-          this.toMongo()
-      }
-    }.bind(this)) // up END !!
-
-    // get change
-    if(this.data.length === 0) {
-      console.log(this.data.length + ' files to change')
-
-    } else {
-      let h = 0
-      data.forEach(function(file, index, array) {
-
-        let test = false
-        let g = 0
-        this.data.forEach(function(mongo, i, a) {
-          if(file.filename === mongo.filename && file.modified === mongo.modified) {
-            test = true
-          }
-          g++
-          if(g === a.length){
-            if(!test){
-              console.log(file)
-              this.change.push(file)
-            }
-            h++
-          }
-        }.bind(this))
-        if(h === array.length){
-          console.log(this.change.length + ' files to change')
-          // console.log(this.change)
-          if(this.change.length > 0)
-            this.changeMongo()
-        }
-      }.bind(this))
-    } // change END !!
-
-  } // Mongo init END !!
-
-  toMongo() {
-    console.log('-- insert start')
-    this.emit('insert')
+  insert(select) {
+    if(select.length === 0) {
+      // this.emit('insert')
+      setTimeout(() => { this.emit('inserted') }, 1)
+    }
     let c = 0
-    this.up.forEach(function(up, index, array) {
+    select.forEach((f, index, array) => {
+      if(index === 0) {
+        console.log(this.lgmk + this.name + ' insert')
+        this.emit('insert')
+      }
+      this.metadata(f, (file) => {
+        file.added = new Date()
+        this.data.push(file)
 
-      this.metadata(up, function(file) {
-
-        this.upData(file)
-        this.collection.findOne({ filename: file.filename }, function(err, object) {
+        // insert mongo
+        this.collection.insertOne(file, (err, res) => {
           if (err) throw err
-          if(!object){
-            this.collection.insertOne(file, function(err, res) {
-              if (err) throw err
-
-              console.log('inserted: ' + file.filename)
-              c++
-              if(c === array.length){
-                this.up = []
-                console.log('-- insert done')
-                this.emit('inserted')
-              }
-
-            }.bind(this)) // this.collection.insertOne
-
-          }
-        }.bind(this)) // this.collection.findOne({ filename: file.filename })
-
-      }.bind(this)) // this.metadata
-    }.bind(this)) // this.up.forEach
-
-  } // toMongo END !!
-
-  changeMongo() {
-    console.log(' -- mongo update')
-    this.emit('update')
-    let c = 0
-    this.change.forEach(function(change, index, array) {
-
-      this.metadata(change, function(file) {
-
-        this.changeData(file)
-
-        const search = { filename: file.filename }
-        const query = { $set: {
-          modified: file.modified,
-          orientation: file.orientation,
-          _stats: file._stats,
-          _exif: file._exif
-        }}
-
-        this.collection.updateOne(search, query, function(err, res) {
-          if (err) throw err
-
           c++
           if(c === array.length) {
-            this.change = []
-            console.log(' -- mongo updated')
-            this.emit('updated')
+            console.log(this.lgmk + this.name + ' inserted')
+            this.emit('inserted')
           }
-        }.bind(this))
+        })
 
-      }.bind(this))
+      })
+    })
+  } // insert
 
-    }.bind(this))
-  }
+  update(select) {
+    if(select.length === 0) {
+      // this.emit('update')
+      setTimeout(() => { this.emit('updated') }, 1)
+    }
+    let c = 0
+    select.forEach((f, index, array) => {
+      if(index === 0) {
+        console.log(this.lgmk + this.name + ' update')
+        this.emit('update')
+      }
+      this.metadata(f, (file) => {
+        this.change(this.data, file, () => {
 
-  delete(data) {
-      let c = 0
-      data.forEach(function(file, index, array) {
-        if(c === 0) {
-          console.log('  * mongo delete')
-          this.emit('delete')
-        }
-        this.unlink(this.data, file, function() {
-          const query = { filename: file.filename }
-          this.collection.deleteOne(query, function(err, object) {
-            if (err) throw er
+          // update mongo
+          const search = { filename: file.filename }
+          const query = { $set: {
+            created: file.created,
+            time: file.time,
+            modified: file.modified,
+            orientation: file.orientation,
+            _stats: file._stats,
+            _exif: file._exif,
+            ftp: file.ftp
+          }}
+          this.collection.updateOne(search, query, (err, res) => {
+            if (err) throw err
             c++
-            if(c === array.length){
-              console.log('  * mongo deleted')
-              this.emit('deleted')
+            if(c === array.length) {
+              console.log(this.lgmk + this.name + ' updated')
+              this.emit('updated')
             }
-          }.bind(this))
-        }.bind(this))
-      }.bind(this))
-  } // delete
+          })
 
-  // ---------------------------------------------------------------------------
+        })
+      })
+    })
+  } // update
+
+  delete(select) {
+    if(select.length === 0) {
+      // this.emit('delete')
+      setTimeout(() => { this.emit('deleted') }, 1)
+    }
+    let c = 0
+    select.forEach((file, index, array) => {
+      if(index === 0) {
+        console.log(this.lgmk + this.name + ' delete')
+        this.emit('delete')
+      }
+
+      // unlink mongo
+      this.unlink(this.data, file, () => {
+        const query = { filename: file.filename }
+        this.collection.deleteOne(query, (err, object) => {
+          if (err) throw er
+          c++
+          if(c === array.length) {
+            console.log(this.lgmk + this.name + ' deleted')
+            this.emit('deleted')
+          }
+        })
+      })
+
+    })
+  } // delete
 
   metadata(file, callback) {
     exiftool
       .read(file.path)
       .then((tags) => {
-        file.display     = file.path.replace(file.filename, '') + '.display/' + file.filename
+
+        let created
+        if(tags.DateCreated) {
+          created = new Date(tags.DateCreated)
+        }
+        let time
+        if(tags.TimeCreated) {
+          created.setHours(tags.TimeCreated.hour, tags.TimeCreated.minute, tags.TimeCreated.second, tags.TimeCreated.millisecond)
+          time = tags.TimeCreated
+        }
+
+//      file.filename
+//      file.path
+//      file.added
+//      file.modified
+        file.created     = created
+        file.time        = time
+        file.ftp         = true
+        file.display     = file.path.replace(file.filename, '') + '.' + this.dsply + '/' + file.filename
+        file.thumbnail   = file.path.replace(file.filename, '') + '.' + this.thumb + '/' + file.filename
         file.orientation = tags.ImageWidth > tags.ImageHeight ? 'landscape' : 'portrait'
+//      file._stats
         file._exif       = tags
-        callback(file)
+
+        console.log(file)
+        this.display(file, () => {
+          callback(file)
+        })
       })
       .catch(err => console.error(err))
-  } // assistFile END !!
+  } // metadata
 
-  upData(file) {
-    this.data.push(file)
-  } // offData END !!
+  display(file, callback) {
+    const display = file.display.replace(file.filename, '');
+    if (!fs.existsSync(display)){
+      fs.mkdirSync(display)
+    }
+    const thumbs = file.thumbnail.replace(file.filename, '');
+    if (!fs.existsSync(thumbs)){
+      fs.mkdirSync(thumbs)
+    }
+    const factor = file.orientation === 'portrait' ? 1 : ( file._exif.ImageWidth / file._exif.ImageHeight )
 
-  changeData(file) {
-    this.data.forEach(function(data, index) {
-      if(data.filename === file.filename){
-        this.data[index] = file
-      }
-    }.bind(this))
-  } // offData END !!
-
-  writeDisplay(file){
-    const width = file.orientation == 'portrait' ? this.displayWidth : this.displayWidth / ( file._exif.ImageHeight / file._exif.ImageWidth )
+    const dsplyWidth = this.dsplyShort * factor
+    const thumbWidth = this.thumbShort * factor
     gm(file.path)
-      .resizeExact(width)
-      .write(file.display, function (err) {
+      .resizeExact(dsplyWidth)
+      .write(file.display, (err) => {
         if (err) throw err
-        console.log(file.display + ' added')
+        gm(file.path)
+          .resizeExact(thumbWidth)
+          .write(file.thumbnail, (err) => {
+            if (err) throw err
+            callback()
+          })
       })
-  } // writeDisplay END !!
+  } // display
+
+  log_name(name, n) {
+    return (n === 1 ? n + ' ' + name : n + ' ' + name + 's');
+  }
 
 }
 

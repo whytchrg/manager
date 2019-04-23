@@ -6,22 +6,21 @@ const Chokidar = require('chokidar')
 
 class File extends Extend {
 
-  constructor(options) { // path
+  constructor(options) {
     super()
 
     this.local = options.local
-    this.chokidar = Chokidar.watch(this.local, {ignored: /(^|[\/\\])\../})
 
-    // data array
-    this.data    = []
+    this.data = []
 
-    this.init()
+    this.init(options)
   }
 
-  init() {
+  init(options) {
+    const chokidar = Chokidar.watch(options.local, {ignored: /(^|[\/\\])\../})
     let ready = false
 
-    this.chokidar.on('ready', () => { // init
+    chokidar.on('ready', () => { // init
       ready = true
       this.emit('init')
     })
@@ -30,24 +29,24 @@ class File extends Extend {
       const file = this.metadata(path, stats)
       this.data.push(file)
       if(ready)
-        this.emit('add')
+        this.emit('activity')
     })
 
     .on('change', (path, stats) => { // change
       const file = this.metadata(path, stats)
-      this.change(this.data, file, function() {
-        this.emit('change', file)
-      }.bind(this))
+      this.change(this.data, file, () => {
+        this.emit('activity', file)
+      })
     })
 
     .on('unlink', path => { // unlink
       const file = { filename: path.replace(this.local, '') }
-      this.unlink(this.data, file, function() {
-        this.emit('unlink')
-      }.bind(this))
+      this.unlink(this.data, file, () => {
+        this.emit('activity')
+      })
     })
 
-  } // watcher
+  } // init
 
   metadata(path, stats) {
     const file = {

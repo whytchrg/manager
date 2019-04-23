@@ -10,67 +10,66 @@ class Extend extends Events {
 
   }
 
-  notB(a, b, callback) { // compare by filename a != b = select
+  getNew(a, b, callback) {
     let select = []
-    let aCount = 0
-    a.forEach(function(aObject, aIndex, aArray) {
-      let test = false
-      let bCount = 0
-      b.forEach(function(bObject, bindex, bArray) {
-        if(aObject.filename === bObject.filename) {
-          test = true
+    let counter = 0
+    if(a.length === 0) {
+      callback(select)
+    }
+    a.forEach((element, index, array) => {
+      let test = true
+      let c = 0
+      b.forEach((e, bindex, bArray) => {
+        if(element.filename === e.filename) {
+          test = false
         }
-        bCount++
-        if(bCount === bArray.length) {
-          if(!test) select.push(aObject)
-          aCount++
+        c++
+        if(c === bArray.length) {
+          if(test) select.push(element)
+          counter++
         }
-      }.bind(this))
-      if(aCount === aArray.length) {
+      })
+      if(counter === array.length || b.length === 0 && index === array.length-1) {
+        if(b.length === 0) {
+          select = a
+        }
         callback(select)
       }
     })
-  } // not B
+  } // getNew
 
-  oldB(a, b, callback) { // compare by filename && modified
-
+  getChanged(a, b, callback) {
     let select = []
-    let aCount = 0
-
-    a.forEach(function(aObject, aIndex, aArray) {
-
+    let counter = 0
+    a.forEach((element, index, array) => {
       let test = false
-      let bCount = 0
-      b.forEach(function(bObject, bindex, bArray) {
-
-        if(bObject.filename === aObject.filename && bObject.modified === aObject.modified) { // modified <== modified  eval if true not !true
+      let c = 0
+      b.forEach((e, bindex, bArray) => {
+        if(e.filename === element.filename && e.modified !== element.modified) {
           test = true
         }
-
-        bCount++
-        if(bCount === bArray.length){
-          if(!test) select.push(aObject)
-          aCount++
+        c++
+        if(c === bArray.length) {
+          if(test) select.push(element)
+          counter++
         }
-
-      }.bind(this))
-      if(aCount === aArray.length){
+      })
+      if(counter === array.length) {
         callback(select)
       }
     })
+  } // getChanged
 
-  } // not B
-
-  notA(a, b, callback) {
-    this.notB(b, a, function(select) {
+  getDeleted(a, b, callback) {
+    this.getNew(b, a, (select) => {
       callback(select)
     })
-  } // not A
+  } // getDeleted
 
   change(data, file, callback) {
-    data.forEach(function(element, index) {
-      if(element.filename === file.filename){
-        data[index] = file
+    data.forEach((element, index) => {
+      if(element.filename === file.filename) {
+        this.data[index] = file
         callback()
       }
     })
