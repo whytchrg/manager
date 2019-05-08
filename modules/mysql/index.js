@@ -8,7 +8,13 @@ class Mysql extends Extend {
 
   constructor(options) { // http, db, collection
     super()
-    this.name = 'mysql'
+    this.lgmk = '≶ '
+    this.name = this.constructor.name
+
+    // settings
+    this.extension = '.png'
+    this.dsply = '.display/'
+    this.thumb = '.thumbnail/'
 
     this.httpRequest = {
         url: options.http + "request/",
@@ -31,16 +37,18 @@ class Mysql extends Extend {
     this.httpRequest.body.data = this.data
     request(this.httpRequest, (error, response, body) => {
       this.data = JSON.parse(body.data)
+      console.log(this.lgmk + this.log_name(this.name, this.data.length))
       this.emit('init') // emit when done
     })
   } // init
 
   evaluate(data) { // add files to MongoDB
-    console.log('- evaluate ' + this.name)
+    console.log(data)
+    console.log(this.lgmk + 'evaluate ' + this.name)
 
     // get data to delete ( this.off[] )
     if(this.data.length === 0) {
-      console.log(this.log_name(this.data.length, this.name) + ' to delete')
+      console.log(this.lgmk + this.log_name(this.name, this.data.length) + ' to delete')
     } else {
       let d = 0
       this.data.forEach(function(mysql, index, array) {
@@ -62,7 +70,7 @@ class Mysql extends Extend {
 
         }.bind(this))
         if(d === array.length){
-          console.log(this.off.length + ' files to delete')
+          console.log(this.lgmk + this.log_name(this.name, this.off.length) + ' to delete')
 
           if(this.off.length > 0) {
             this.delete(this.off)
@@ -103,7 +111,7 @@ class Mysql extends Extend {
         }
 
         if(f === array.length){
-          console.log(this.up.length + ' files to insert')
+          console.log(this.lgmk + this.log_name(this.name, this.up.length) + ' to insert')
           if(this.up.length > 0) {
             this.insert(this.up)
           }
@@ -112,7 +120,7 @@ class Mysql extends Extend {
 
       // get change
       if(this.data.length === 0) {
-        console.log('0 files to change')
+        console.log(this.lgmk + this.log_name(this.name, this.data.length) + ' to update')
 
       } else {
         let h = 0
@@ -134,7 +142,7 @@ class Mysql extends Extend {
             }
           }.bind(this))
           if(h === array.length){
-            console.log(this.change.length + ' files to change')
+            console.log(this.lgmk + this.log_name(this.name, this.change.length) + ' to update')
             if(this.change.length > 0) {
               this.update()
             }
@@ -150,7 +158,7 @@ class Mysql extends Extend {
     let data = {}
     select.forEach(function(file, index, array) {
       this.upData(file)
-      const insert = { filename: file.filename, modified: file.modified }
+      const insert = this.makeInsert(file)
       data[index] = insert
     }.bind(this))
     const json = JSON.stringify(data)
@@ -173,7 +181,8 @@ class Mysql extends Extend {
     let data = {} // create object with index
     this.change.forEach(function(file, index, array) {
       this.changeData(file)
-      const insert = { filename: file.filename, modified: file.modified }
+      const insert = this.makeInsert(file)
+      console.log(insert)
       data[index] = insert
     }.bind(this))
     const json = JSON.stringify(data)
@@ -189,6 +198,19 @@ class Mysql extends Extend {
     }.bind(this))
 
   } // delete END !!
+
+  makeInsert(file) {
+    return {
+      filename: file.filename,
+      name: file.name,
+      modified: file.modified,
+      created: file.created,
+      added: file.added,
+      tags: JSON.stringify(file.tags),
+      display: this.dsply + file.name + this.extension,
+      thumbnail: this.thumb + file.name + this.extension
+    }
+  }
 
   delete(select) {
     console.log('- ' + this.name + ' delete')
@@ -231,7 +253,7 @@ class Mysql extends Extend {
     }.bind(this))
   } // offData END !!
 
-  log_name(n, name) {
+  log_name(name, n) {
     return (n === 1 ? n + ' ' + name : n + ' ' + name + 's');
   }
 

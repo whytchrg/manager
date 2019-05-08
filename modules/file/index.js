@@ -9,7 +9,8 @@ class File extends Extend {
   constructor(options) {
     super()
 
-    this.local = options.local
+    this.module = this.constructor.name
+    this.icon   = '∎ '
 
     this.data = []
 
@@ -17,32 +18,32 @@ class File extends Extend {
   }
 
   init(options) {
+
     const chokidar = Chokidar.watch(options.local, {ignored: /(^|[\/\\])\../})
     let ready = false
 
-    chokidar.on('ready', () => { // init
+    chokidar.on('ready', () => {
       ready = true
+      console.log(this.icon + this.log(this.module, this.data.length))
       this.emit('init')
     })
-
-    .on('add', (path, stats) => { // add
+    .on('add', (path, stats) => {
       const file = this.metadata(path, stats)
       this.data.push(file)
+      console.log()
       if(ready)
-        this.emit('activity')
+        this.emit('init')
     })
-
-    .on('change', (path, stats) => { // change
+    .on('change', (path, stats) => {
       const file = this.metadata(path, stats)
       this.change(this.data, file, () => {
-        this.emit('activity', file)
+        this.emit('init', file)
       })
     })
-
-    .on('unlink', path => { // unlink
-      const file = { filename: path.replace(this.local, '') }
+    .on('unlink', path => {
+      const file = this.metadata(path, stats)
       this.unlink(this.data, file, () => {
-        this.emit('activity')
+        this.emit('init')
       })
     })
 
@@ -50,14 +51,14 @@ class File extends Extend {
 
   metadata(path, stats) {
     const file = {
-      filename: path.replace(this.local, ''),
+      filename: path.match(/([^\/]*)\/*$/)[1],
       path: path,
       modified: Math.round(stats.mtimeMs),
       _stats: stats
     }
     return file
-  } // metadata synchronous
+  } // metadata
 
-}
+} // Files
 
 module.exports = File

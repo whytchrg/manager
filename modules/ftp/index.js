@@ -17,6 +17,10 @@ class Ftp extends Extend {
     // Array
     this.data = []
 
+    this.extension = '.png'
+    this.dsply = 'display'
+    this.thumb = 'thumbnail'
+
     this.init(options)
 
   }
@@ -84,9 +88,9 @@ class Ftp extends Extend {
   makeupload(files, callback) {
 
     let upload = []
-    this.client.mkdir(this.remote + '.display/', true, (err) => {
+    this.client.mkdir(this.remote + '.' + this.dsply + '/', true, (err) => {
       if (err) throw err
-      this.client.mkdir(this.remote + '.thumbnail/', true, (err) => {
+      this.client.mkdir(this.remote + '.' + this.thumb +'/', true, (err) => {
         if (err) throw err
         let counter = 0
         files.forEach((element, index, array) => {
@@ -100,12 +104,12 @@ class Ftp extends Extend {
           const b = {
             filename: element.filename,
             path: element.display,
-            remote: this.remote + '.display/' + element.filename
+            remote: this.remote + '.' + this.dsply + '/' + element.name + this.extension
           }
           const c = {
             filename: element.filename,
             path: element.thumbnail,
-            remote: this.remote + '.thumbnail/' + element.filename
+            remote: this.remote + '.' + this.thumb + '/' + element.name + this.extension
           }
           upload.push(a)
           upload.push(b)

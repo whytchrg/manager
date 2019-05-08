@@ -11,17 +11,18 @@ class Mongo extends Extend {
 
   constructor(options) { // url, db, collection
     super()
-    this.lgmk = '⚚ '
-    this.name = 'mongo'
-
-    this.data = []
-    this.activity = { progress: false }
+    this.lgmk = '⋑ '
+    this.name = this.constructor.name
 
     // settings
+    this.extension = '.png'
     this.dsplyShort = 600
     this.thumbShort = 100
     this.dsply = 'display'
     this.thumb = 'thumbnail'
+
+    this.data = []
+    // this.activity = { progress: false }
 
     this.init(options)
   }
@@ -45,60 +46,57 @@ class Mongo extends Extend {
       })
     })
 
-    let insert = { progress: false }
-    let update = { progress: false }
-    let remove = { progress: false }
+    let insert = false
+    let update = false
+    let remove = false
 
     this.on('insert', () => {
-      insert.progress = true
-      this.progress(insert, update, remove)
+      insert = true
     })
     this.on('inserted', () => {
-      insert.progress = false
+      insert = false
       this.progress(insert, update, remove)
     })
     this.on('update', () => {
-      update.progress = true
-      this.progress(insert, update, remove)
+      update = true
     })
     this.on('updated', () => {
-      update.progress = false
+      update = false
       this.progress(insert, update, remove)
     })
     this.on('delete', () => {
-      remove.progress = true
-      this.progress(insert, update, remove)
+      remove = true
     })
     this.on('deleted', () => {
-      remove.progress = false
+      remove = false
       this.progress(insert, update, remove)
     })
 
   } // init
 
   progress(insert, update, remove) {
-    if(!insert.progress && !update.progress && !remove.progress) {
-      this.activity.progress = false
+    if(!insert && !update && !remove) {
+      // this.activity.progress = false
       this.emit('evaluate')
     } else {
-      this.activity.progress = true
+      // this.activity.progress = true
     }
   }
 
-  evaluate(data) {
+  file(file, flickr) {
     console.log(this.lgmk + 'evaluate ' + this.name)
 
-    this.getNew(data, this.data, (select) => {
+    this.getNew(file, this.data, (select) => {
       console.log(this.lgmk + this.log_name(this.name, select.length) + ' to insert')
       this.insert(select)
     })
 
-    this.getChanged(data, this.data, (select) => {
+    this.getChanged(file, this.data, (select) => {
       console.log(this.lgmk + this.log_name(this.name, select.length) + ' to update')
       this.update(select)
     })
 
-    this.getDeleted(data, this.data, (select) => {
+    this.getDeleted(file, this.data, (select) => {
       console.log(this.lgmk + this.log_name(this.name, select.length) + ' to delete')
       this.delete(select)
     })
@@ -117,7 +115,7 @@ class Mongo extends Extend {
         this.emit('insert')
       }
       this.metadata(f, (file) => {
-        file.added = new Date()
+        file.added = new Date().getTime()
         this.data.push(file)
 
         // insert mongo
@@ -153,7 +151,11 @@ class Mongo extends Extend {
           const query = { $set: {
             created: file.created,
             time: file.time,
+            tags: file.tags,
+            added: file.added,
             modified: file.modified,
+            display: file.display,
+            thumbnail: file.thumbnail,
             orientation: file.orientation,
             _stats: file._stats,
             _exif: file._exif,
@@ -207,29 +209,35 @@ class Mongo extends Extend {
       .then((tags) => {
 
         let created
+        let time
+        const name = file.filename.replace('.' + tags.FileTypeExtension, '')
+
         if(tags.DateCreated) {
           created = new Date(tags.DateCreated)
+          if(tags.TimeCreated) {
+            created.setHours(tags.TimeCreated.hour, tags.TimeCreated.minute, tags.TimeCreated.second, tags.TimeCreated.millisecond)
+            created = created.getTime()
+            time = tags.TimeCreated
+          }
+        } else {
+          created = new Date(tags.CreateDate)
+          created = created.getTime()
+          // time =
         }
-        let time
-        if(tags.TimeCreated) {
-          created.setHours(tags.TimeCreated.hour, tags.TimeCreated.minute, tags.TimeCreated.second, tags.TimeCreated.millisecond)
-          time = tags.TimeCreated
-        }
-
 //      file.filename
 //      file.path
 //      file.added
 //      file.modified
+        file.name        = name
         file.created     = created
         file.time        = time
         file.ftp         = true
-        file.display     = file.path.replace(file.filename, '') + '.' + this.dsply + '/' + file.filename
-        file.thumbnail   = file.path.replace(file.filename, '') + '.' + this.thumb + '/' + file.filename
+        file.tags        = tags.Keywords
+        file.display     = file.path.replace(file.filename, '') + '.' + this.dsply + '/' + name + this.extension
+        file.thumbnail   = file.path.replace(file.filename, '') + '.' + this.thumb + '/' + name + this.extension
         file.orientation = tags.ImageWidth > tags.ImageHeight ? 'landscape' : 'portrait'
 //      file._stats
         file._exif       = tags
-
-        console.log(file)
         this.display(file, () => {
           callback(file)
         })
@@ -238,16 +246,15 @@ class Mongo extends Extend {
   } // metadata
 
   display(file, callback) {
-    const display = file.display.replace(file.filename, '');
+    const display = file.display.replace(file.name + this.extension, '');
     if (!fs.existsSync(display)){
       fs.mkdirSync(display)
     }
-    const thumbs = file.thumbnail.replace(file.filename, '');
+    const thumbs = file.thumbnail.replace(file.name + this.extension, '');
     if (!fs.existsSync(thumbs)){
       fs.mkdirSync(thumbs)
     }
     const factor = file.orientation === 'portrait' ? 1 : ( file._exif.ImageWidth / file._exif.ImageHeight )
-
     const dsplyWidth = this.dsplyShort * factor
     const thumbWidth = this.thumbShort * factor
     gm(file.path)

@@ -69,7 +69,7 @@ class Extend extends Events {
   change(data, file, callback) {
     data.forEach((element, index) => {
       if(element.filename === file.filename) {
-        this.data[index] = file
+        data[index] = file
         callback()
       }
     })
@@ -83,6 +83,10 @@ class Extend extends Events {
       }
     })
   } // unlink callback
+
+  log(name, n) {
+    return (n === 1 ? n + ' ' + name : n + ' ' + name + 's');
+  }
 
 }
 

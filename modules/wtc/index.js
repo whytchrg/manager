@@ -1,18 +1,24 @@
 
 "use strict"
 
-const File  = require('../file')
-const Mongo = require('../mongo')
-const Ftp   = require('../ftp')
-const Mysql = require('../mysql')
+const File   = require('../file')
+const Flickr = require('../flickr')
+const Mongo  = require('../mongo')
+const Ftp    = require('../ftp')
+const Mysql  = require('../mysql')
 
 class Wtc {
 
   constructor(options) {
 
     // Classes
-    this.file = new File({ // File
+    this.file = new File({
       local: options.local
+    })
+
+    this.flickr = new Flickr({ // Flickr
+      userid: options.userid,
+      apikey: options.apikey
     })
     this.mongo = new Mongo({ // Mongo
       url:        options.url,
@@ -35,6 +41,8 @@ class Wtc {
 
     // File Booleans
     this.fileInit      = false
+    // Flickr Booleans
+    this.flickrInit      = false
     // Mongo Booleans
     this.mongoInit     = false
     this.mongoEvaluate = false
@@ -53,10 +61,15 @@ class Wtc {
     // --- --- File Events !!
     this.file.on('init', () => { // init
       this.fileInit = true
-      console.log(this.file.data.length + ' files')
       this.evaluateMongo()
     })
     this.file.on('activity', () => { // activity
+      this.evaluateMongo()
+    })
+
+    // --- --- Flickr Events !!
+    this.flickr.on('init', () => { // init
+      this.flickrInit = true
       this.evaluateMongo()
     })
 
@@ -87,10 +100,8 @@ class Wtc {
     })
 
     // --- --- Mysql Events !! --- ---
-
     this.mysql.on('init', () => {
       this.mysqlInit = true
-      console.log(this.mysql.data.length + ' mysqls')
       this.evaluate()
     })
 
@@ -105,12 +116,13 @@ class Wtc {
 
   } // init
 
-  evaluateMongo() {
+  async evaluateMongo() {
 
-    if(this.fileInit && this.mongoInit) {
+    if(this.fileInit && this.flickrInit && this.mongoInit) {
       this.mongoEvaluate = false
       // setTimeout(() => {
-        this.mongo.evaluate(this.file.data)
+        await this.mongo.file(this.file.data)
+        // this.mongo.flickr(this.file.data)
       // }, 1)
 
     }

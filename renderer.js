@@ -16,5 +16,7 @@ let wtc = new Wtc({
   ftpport:    process.env.FTP_PRT,
   ftpuser:    process.env.FTP_USR,
   ftppass:    process.env.FTP_KEY,
-  http:       process.env.HTTP
+  http:       process.env.HTTP,
+  userid:     process.env.FLICKR_USER_ID,
+  apikey:     process.env.FLICKR_API_KEY
 })
