@@ -42,7 +42,7 @@ class Wtc {
     // File Booleans
     this.fileInit      = false
     // Flickr Booleans
-    this.flickrInit      = false
+    this.flickrInit    = false
     // Mongo Booleans
     this.mongoInit     = false
     this.mongoEvaluate = false
@@ -61,22 +61,19 @@ class Wtc {
     // --- --- File Events !!
     this.file.on('init', () => { // init
       this.fileInit = true
-      this.evaluateMongo()
-    })
-    this.file.on('activity', () => { // activity
-      this.evaluateMongo()
+      this.eval()
     })
 
     // --- --- Flickr Events !!
     this.flickr.on('init', () => { // init
       this.flickrInit = true
-      this.evaluateMongo()
+      this.eval()
     })
 
     // --- --- Mongo Events !!
     this.mongo.on('init', () => { // init
       this.mongoInit = true
-      this.evaluateMongo()
+      this.eval()
     })
 
     this.mongo.on('evaluate', () => { // evaluate
@@ -116,18 +113,14 @@ class Wtc {
 
   } // init
 
-  async evaluateMongo() {
+  async eval() {
 
-    if(this.fileInit && this.flickrInit && this.mongoInit) {
-      this.mongoEvaluate = false
-      // setTimeout(() => {
-        await this.mongo.file(this.file.data)
-        // this.mongo.flickr(this.file.data)
-      // }, 1)
-
+    if(this.fileInit && this.flickrInit && this.mongoInit && !this.mongoEvaluate) {
+      await this.mongo.file(this.file.data)
+      await this.mongo.flickr(this.flickr.data)
     }
 
-  } // evaluateMongo
+  } // eval
 
   evaluate() {
 

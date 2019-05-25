@@ -46,6 +46,7 @@ class Extend extends Events {
       let c = 0
       b.forEach((e, bindex, bArray) => {
         if(e.filename === element.filename && e.modified !== element.modified) {
+          element.added = e.added
           test = true
         }
         c++
@@ -71,6 +72,15 @@ class Extend extends Events {
       if(element.filename === file.filename) {
         data[index] = file
         callback()
+      }
+    })
+  } // change callback
+
+  changeNEW(file) {
+    this.data.forEach((element, index) => {
+      if(element.filename === file.filename) {
+        this.data[index] = file
+        return true
       }
     })
   } // change callback

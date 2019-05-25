@@ -208,7 +208,8 @@ class Mysql extends Extend {
       added: file.added,
       tags: JSON.stringify(file.tags),
       display: this.dsply + file.name + this.extension,
-      thumbnail: this.thumb + file.name + this.extension
+      thumbnail: this.thumb + file.name + this.extension,
+      orientation: file.orientation
     }
   }
 

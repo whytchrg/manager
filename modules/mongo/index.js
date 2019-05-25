@@ -11,8 +11,9 @@ class Mongo extends Extend {
 
   constructor(options) { // url, db, collection
     super()
-    this.lgmk = '⋑ '
-    this.name = this.constructor.name
+
+    this.module = this.constructor.name
+    this.icon   = '⋑ '
 
     // settings
     this.extension = '.png'
@@ -22,7 +23,6 @@ class Mongo extends Extend {
     this.thumb = 'thumbnail'
 
     this.data = []
-    // this.activity = { progress: false }
 
     this.init(options)
   }
@@ -41,7 +41,7 @@ class Mongo extends Extend {
       this.collection.find({}).toArray((err, data) => {
         if (err) throw err
         this.data = data
-        console.log(this.lgmk + this.log_name(this.name, this.data.length))
+        console.log(this.icon + this.log_name(this.module, this.data.length))
         this.emit('init')
       })
     })
@@ -83,23 +83,28 @@ class Mongo extends Extend {
     }
   }
 
-  file(file, flickr) {
-    console.log(this.lgmk + 'evaluate ' + this.name)
+  file(file) {
+    console.log(this.icon + 'evaluate ' + this.module)
 
     this.getNew(file, this.data, (select) => {
-      console.log(this.lgmk + this.log_name(this.name, select.length) + ' to insert')
+      console.log(this.icon + this.log_name(this.module, select.length) + ' to insert')
       this.insert(select)
     })
 
     this.getChanged(file, this.data, (select) => {
-      console.log(this.lgmk + this.log_name(this.name, select.length) + ' to update')
+      console.log(this.icon + this.log_name(this.module, select.length) + ' to update')
       this.update(select)
     })
 
     this.getDeleted(file, this.data, (select) => {
-      console.log(this.lgmk + this.log_name(this.name, select.length) + ' to delete')
+      console.log(this.icon + this.log_name(this.module, select.length) + ' to delete')
       this.delete(select)
     })
+
+  } // evaluate
+
+  flickr(file, flickr) {
+    console.log(this.icon + 'evaluate ' + this.module)
 
   } // evaluate
 
@@ -111,7 +116,7 @@ class Mongo extends Extend {
     let c = 0
     select.forEach((f, index, array) => {
       if(index === 0) {
-        console.log(this.lgmk + this.name + ' insert')
+        console.log(this.icon + this.module + ' insert')
         this.emit('insert')
       }
       this.metadata(f, (file) => {
@@ -123,7 +128,7 @@ class Mongo extends Extend {
           if (err) throw err
           c++
           if(c === array.length) {
-            console.log(this.lgmk + this.name + ' inserted')
+            console.log(this.icon + this.module + ' inserted')
             this.emit('inserted')
           }
         })
@@ -140,7 +145,7 @@ class Mongo extends Extend {
     let c = 0
     select.forEach((f, index, array) => {
       if(index === 0) {
-        console.log(this.lgmk + this.name + ' update')
+        console.log(this.icon + this.module + ' update')
         this.emit('update')
       }
       this.metadata(f, (file) => {
@@ -165,7 +170,7 @@ class Mongo extends Extend {
             if (err) throw err
             c++
             if(c === array.length) {
-              console.log(this.lgmk + this.name + ' updated')
+              console.log(this.icon + this.module + ' updated')
               this.emit('updated')
             }
           })
@@ -183,7 +188,7 @@ class Mongo extends Extend {
     let c = 0
     select.forEach((file, index, array) => {
       if(index === 0) {
-        console.log(this.lgmk + this.name + ' delete')
+        console.log(this.icon + this.module + ' delete')
         this.emit('delete')
       }
 
@@ -194,7 +199,7 @@ class Mongo extends Extend {
           if (err) throw er
           c++
           if(c === array.length) {
-            console.log(this.lgmk + this.name + ' deleted')
+            console.log(this.icon + this.module + ' deleted')
             this.emit('deleted')
           }
         })
@@ -213,12 +218,25 @@ class Mongo extends Extend {
         const name = file.filename.replace('.' + tags.FileTypeExtension, '')
 
         if(tags.DateCreated) {
+
           created = new Date(tags.DateCreated)
+          time = 0
           if(tags.TimeCreated) {
-            created.setHours(tags.TimeCreated.hour, tags.TimeCreated.minute, tags.TimeCreated.second, tags.TimeCreated.millisecond)
-            created = created.getTime()
+            if(tags.TimeCreated.hour) {
+              created.setHours(tags.TimeCreated.hour)
+            }
+            if(tags.TimeCreated.minute) {
+              created.setMinutes(tags.TimeCreated.minute)
+            }
+            if(tags.TimeCreated.second) {
+              created.setSeconds(tags.TimeCreated.second)
+            }
+            if(tags.TimeCreated.millisecond) {
+              created.setMilliseconds(tags.TimeCreated.millisecond)
+            }
             time = tags.TimeCreated
           }
+          created = created.getTime()
         } else {
           created = new Date(tags.CreateDate)
           created = created.getTime()
