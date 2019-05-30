@@ -1,4 +1,4 @@
-
+ 
 "use strict"
 
 const Extend   = require('../extend')
@@ -20,50 +20,96 @@ class File extends Extend {
   }
 
   init() {
-
-    const chokidar = Chokidar.watch(this.path, {ignored: /(^|[\/\\])\../})
     let ready = false
+    const chokidar = Chokidar.watch(this.path, {ignored: /(^|[\/\\])\../})
 
     chokidar.on('ready', () => {
       ready = true
+
       console.log(this.icon + this.log(this.module, this.data.length))
       this.emit('init')
     })
     .on('add', (path, stats) => {
-      const file = this.metadata(path, stats)
-      this.data.push(file)
-      if(ready)
-        this.emit('init')
+
+      if(this.dataInsert(path, stats)) {
+        if(ready) this.emit('init')
+      }
     })
     .on('change', (path, stats) => {
-      const file = this.metadata(path, stats)
-      const change = this.changeNEW(file)
-      if(change) {
-        this.emit('init', file)
+
+      if(this.dataUpdate(path, stats)) {
+        this.emit('init')
       }
     })
     .on('unlink', path => {
-      const file = { filename: this.filename(path) }
-      this.unlink(this.data, file, () => {
+
+      if(this.unlinkData(path)) {
         this.emit('init')
-      })
+      }
     })
 
   } // init
 
-  metadata(path, stats) {
-    const file = {
-      filename: this.filename(path),
-      path: path,
-      modified: Math.round(stats.mtimeMs),
-      _stats: stats
+  dataInsert(path, stats) {
+    let result = false
+    const file = this.metadata(path, stats)
+
+    if(this.data.push(file)) {
+
+      result = true
     }
+
+    return result
+  } // dataUpdate
+
+  dataUpdate(path, stats) {
+    let result = false
+    const file = this.metadata(path, stats)
+
+    for(let i = 0; i < this.data.length; i++) {
+
+      if(this.data[i].filename === file.filename) {
+
+        this.data[i].modified = file.modified
+        this.data[i]._stats   = file._stats
+
+        result = true
+      }
+    }
+
+    return result
+  } // dataUpdate
+
+  dataUnlink(path) {
+    let result = false
+    const file = this.metadata(path)
+
+    for(let i = 0; i < this.data.length; i++) {
+
+      if(this.data[i].filename === file.filename) {
+
+        this.data.splice(i, 1)
+
+        result = true
+      }
+    }
+
+    return result
+  } // dataUnlink
+
+  metadata(path, stats) {
+    let file = {
+      filename: this.filename(path),
+      path: path
+    }
+
+    if(stats) {
+      file.modified = Math.round(stats.mtimeMs)
+      file._stats   = stats
+    }
+
     return file
   } // metadata
-
-  filename(path) {
-    return path.match(/([^\/]*)\/*$/)[1]
-  }
 
 } // Files
 

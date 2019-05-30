@@ -20,10 +20,13 @@ class Flickr extends Extend {
   }
 
   init(options) {
+
     this.client.people.getInfo({
       user_id: options.userid
+
     }).then((result) => {
-      let count = result.body.person.photos.count._content
+
+      const count = result.body.person.photos.count._content
       const a = Math.ceil(result.body.person.photos.count._content/500)
       for(let i = 0; i < a; i++) {
         this.client.people.getPublicPhotos({
@@ -32,25 +35,19 @@ class Flickr extends Extend {
           page: i + 1,
           per_page: 500
         }).then((result) => {
-
           result.body.photos.photo.forEach((element) => {
             this.data.push(element)
-            // console.log(element)
-
           })
           if(count == this.data.length) {
             console.log(this.icon + this.log(this.module, this.data.length))
-            console.log(this.data)
             this.emit('init')
           }
-
-        }).catch(function (err) {
+        }).catch((err) => {
           console.error(this.module, err)
         })
       }
-
     })
-    .catch(function (err) {
+    .catch((err) => {
       console.error(this.module, err)
     })
   } // init

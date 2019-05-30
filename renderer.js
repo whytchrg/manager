@@ -9,7 +9,7 @@ const Wtc   = require('./modules/wtc')
 let wtc = new Wtc({
   local:      process.env.LOCAL,
   url:        process.env.MONGO,
-  db:         pjson.name,
+  db:         pjson.name, // APP name
   collection: process.env.LOCAL.match(/([^\/]*)\/*$/)[1], // A5
   remote:     process.env.REMOTE + process.env.LOCAL.match(/([^\/]*)\/*$/)[1],
   ftphost:    process.env.FTP_HST,
