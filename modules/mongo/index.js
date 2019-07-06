@@ -12,15 +12,18 @@ class Mongo extends Extend {
   constructor(options) { // url, db, collection
     super()
 
+    this.icon   = '𝕄  -  '
     this.module = this.constructor.name
-    this.icon   = '⋑ '
+
 
     // settings
-    this.extension = '.png'
+    this.path = options.path
+    this.display = options.display
+    this.thumbnails = options.thumbnails
+    this.extension = options.extension
+
     this.dsplyShort = 600
     this.thumbShort = 100
-    this.dsply = 'display'
-    this.thumb = 'thumbnail'
 
     this.collection
 
@@ -29,421 +32,342 @@ class Mongo extends Extend {
     this.init(options)
   }
 
-  init(options) { // init this.collection
+  async init(options) {
 
-    const client = new mongodb(options.url, {
-      poolSize: 10,
-      useNewUrlParser: true,
-      connectTimeoutMS: 300000
-    })
+    await this.mongoConnect(options)
+    const raw = await this.mongoAll()
 
-    client.connect((err, connect) => {
-      if (err) throw err
-      this.collection = connect.db(options.db).collection(options.collection)
-      this.collection.find({}).toArray((err, data) => {
-        if (err) throw err
-        this.data = data
-        console.log(this.icon + this.log(this.module, this.data.length))
-        console.log(this.data)
-        this.emit('init')
-      })
-    })
+    await this.dataInit(raw)
+
+    console.log(this.icon + this.countName(this.module, this.data.length))
+    // console.log(this.data)
+    this.emit('init')
   } // init
 
-  async evaluate(files, flickr, mysql) {
+  async insert(file) {
+    console.log(this.icon + this.countName(this.module, file.length) + ' to insert from Files')
 
-    let p = false
+    if (file.length > 0) console.log(this.icon + this.module + ' insert // ' + this.countName('File', file.length))
 
-    const a = this.newFiles(files, this.data)
-    const b = this.modFiles(files, this.data)
-    const c = this.oldFiles(files, this.data)
+    for (var i = 0; i < file.length; i++) {
+      const data = await this.exif(file[i])
 
-    const f = this.getflickr(flickr, this.data)
-    // const n = this.notflickr(flickr, this.data)
+      data.views_flickr = []
+      data.views_mysql = []
+      data.added = Math.floor(new Date().getTime() / 1000)
 
-    const m = this.getmysql(mysql, this.data)
+      await Promise.all([this.dataPush(data), this.mongoInsert(data), this.preview(data)])
+    }
 
-    if(await a && await b && await c && await f && await m){
+    if (file.length > 0) console.log(this.icon + this.module + ' insert // ' + this.countName('File', file.length) + ' √')
+    return true
+  } // insert
 
-      if(a.length + b.length + c.length + f.length + m.length > 0){
-        p = true
-        this.emit('progress')
+  async delete(file) {
+    console.log(this.icon + this.countName(this.module, file.length) + ' to delete from Files')
+    if (file.length > 0) console.log(this.icon + this.module + ' delete // ' + this.countName('File', file.length))
+
+    for (var i = 0; i < file.length; i++) {
+      const data   = file[i]
+
+      const search = { filename: data.filename }
+
+      await this.sleep(10)
+      await Promise.all([this.dataUnlink(data), this.mongoDelete(search)])
+    }
+
+    if (file.length > 0) console.log(this.icon + this.module + ' delete // ' + this.countName('File', file.length) + ' √')
+    return true
+  } // delete
+
+  async updateFile(file) {
+    console.log(this.icon + this.countName(this.module, file.length) + ' to update from Files')
+    if (file.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('File', file.length))
+
+    for (var i = 0; i < file.length; i++) {
+      const data   = await this.exif(file[i])
+
+      const search = { filename: data.filename }
+      const update = {
+        modified: data.modified,
+        created: data.created,
+        tags: data.tags,
+        orientation: data.orientation,
+        width: data.width,
+        height: data.height
+      }
+      const query  = { $set: update }
+
+      await this.sleep(10)
+      await Promise.all([this.dataFile(data), this.mongoUpdate(search, query), this.preview(data)])
+    }
+
+    if (file.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('File', file.length) + ' √')
+    return true
+  } // updateFile
+
+  async updateFlickr(select) {
+    console.log(this.icon + this.countName(this.module, select.length) + ' to update from Flickr')
+    if (select.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('Flickr', select.length))
+
+    for (var i = 0; i < select.length; i++) {
+      const file   = select[i]
+
+      const search = { filename: file.filename }
+      const update = {
+        added: file.added,
+        views_flickr: file.views_flickr,
+      }
+      const query = { $set: update }
+
+      await Promise.all([this.dataFlickr(file), this.mongoUpdate(search, query)])
+    }
+
+    if (select.length > 0) console.log(this.icon + this.module + ' updated // ' + this.countName('Flickr', select.length) + ' √')
+    return true
+  } // flickr
+
+  async updateMysql(select) {
+    console.log(this.icon + this.countName(this.module, select.length) + ' to update from Mysql')
+    if (select.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('Mysql', select.length))
+
+    for (var i = 0; i < select.length; i++) {
+      const file   = select[i]
+
+      const search = { filename: file.filename }
+      const update = {
+        views_mysql: file.views_mysql
+      }
+      const query = { $set: update }
+
+      await Promise.all([this.dataMysql(file), this.mongoUpdate(search, query)])
+    }
+
+    if (select.length > 0) console.log(this.icon + this.module + ' updated // ' + this.countName('Mysql', select.length) + ' √')
+    return true
+  } // updateMysql
+
+  //
+
+  metadata(raw) {
+
+    if(!Array.isArray(raw.views_flickr)) {
+      raw.views_flickr = []
+    }
+
+    if(!Array.isArray(raw.views_mysql)) {
+      raw.views_mysql = []
+    }
+
+    let added = raw.added
+    if(raw.added > 1e11) {
+      added = Math.floor(raw.added / 1000)
+    }
+
+    const data = {
+      filename:     raw.filename,
+      created:      raw.created,
+      modified:     raw.modified,
+      added: added,
+      views_flickr: raw.views_flickr,
+      views_mysql: raw.views_mysql,
+      tags: raw.tags,
+      orientation: raw.orientation,
+      width: raw.width,
+      height: raw.height
+    }
+
+    return data
+  } // metadata
+
+  exif(data) {
+    return new Promise((resolve, reject) => {
+
+      exiftool
+        .read(this.path + data.filename)
+        .then((tags) => {
+
+          let created
+          let time
+
+          if(tags.DateCreated) {
+            created = new Date(tags.DateCreated)
+            time = 0
+
+            if(tags.TimeCreated) {
+              if(tags.TimeCreated.hour)        created.setHours(tags.TimeCreated.hour)
+              if(tags.TimeCreated.minute)      created.setMinutes(tags.TimeCreated.minute)
+              if(tags.TimeCreated.second)      created.setSeconds(tags.TimeCreated.second)
+              if(tags.TimeCreated.millisecond) created.setMilliseconds(tags.TimeCreated.millisecond)
+            }
+            created = created.getTime()
+          } else {
+
+            created = new Date(tags.CreateDate)
+            created = created.getTime()
+          }
+
+          data.created     = created
+          data.tags        = tags.Keywords
+          data.orientation = tags.ImageWidth > tags.ImageHeight ? 'landscape' : 'portrait'
+          data.width       = tags.ImageWidth
+          data.height      = tags.ImageHeight
+
+          resolve(data)
+        })
+        .catch(err => console.error(err))
+
+    })
+  } // exif
+
+  async preview(data) {
+
+    const display = this.previewImage(data, this.dsplyShort, this.display)
+
+    const thumbnail = this.previewImage(data, this.thumbShort, this.thumbnails)
+
+    await Promise.all([display, thumbnail])
+
+    return true
+
+  } // preview
+
+  previewImage(data, short, directory) {
+    return new Promise((resolve, reject) => {
+
+      const factor = data.orientation === 'portrait' ? 1 : ( data.width / data.height )
+      const width = short * factor
+      const preview = data.filename.split('.').slice(0, -1).join('.') + this.extension
+
+      const display = this.path + directory
+      if (!fs.existsSync(display)){
+        fs.mkdirSync(display)
       }
 
-      console.log(this.icon + this.log(this.module, a.length) + ' to insert from Files')
-      const i = this.insertNEW(a)
+      gm(this.path + data.filename)
+        .resizeExact(width)
+        .write(display + '/' + preview, (err) => {
+          if (err) throw err
+          resolve(true)
+        })
 
-      console.log(this.icon + this.log(this.module, b.length) + ' to update from Files')
-      const u = this.updateNEW(b)
+    })
+  } // previewImage
 
-      console.log(this.icon + this.log(this.module, c.length) + ' to delete from Files')
-      const d = this.deleteNEW(c)
+  // ----- data methods
 
-      console.log(this.icon + this.log(this.module, f.length) + ' to update from Flickr')
-      const r = this.flickrNEW(f)
+  dataInit(raw) {
+    for(let i = 0; i < raw.length; i++) {
+      const data = this.metadata(raw[i])
 
-      console.log(this.icon + this.log(this.module, m.length) + ' to update from Mysql')
-      const s = this.mysqlNEW(m)
+      this.data.push(data)
+    }
+    return true
+  } // unlink
 
-      if(await i && await u && await d && await r && await s){
-        if(p) this.emit('done')
+  dataFile(data) {
+    for(let i = 0; i < this.data.length; i++) {
+      if(this.data[i].filename === data.filename) {
+
+        this.data[i].modified    = data.modified
+
+        this.data[i].created     = data.created
+        this.data[i].tags        = data.tags
+        this.data[i].orientation = data.orientation
+        this.data[i].width       = data.width
+        this.data[i].height      = data.height
+
         return true
       }
     }
+  } // dataFile
 
-  } // evaluateFiles
+  dataFlickr(file) {
+    for(let i = 0; i < this.data.length; i++) {
+      if(this.data[i].filename === file.filename) {
 
-  mysqlNEW(select) {
-    console.log(select)
+        this.data[i].added = file.added
+        this.data[i].views_flickr = file.views_flickr
 
-    return new Promise((resolve, reject) => {
-      if(select.length === 0) {
-        resolve(true)
+        return true
       }
-      let c = 0
-      select.forEach((m, index, array) => {
-        if(index === 0) {
-          console.log(this.icon + this.module + ' mysql')
-        }
-        this.mysqlChange(m)
-
-        console.log(m.filename)
-        console.log(m.views)
-        // update mongo
-        const search = { filename: m.filename }
-        const query = { $set: {
-          views_mysql: m.views,
-          modified_mongo: new Date().getTime()
-        }}
-        this.collection.updateOne(search, query, (err, res) => {
-          if (err) throw err
-          c++
-          if(c === array.length) {
-            console.log(this.icon + this.module + ' mysqled')
-            resolve(true)
-          }
-        })
-
-
-
-      })
-    })
-  }
-
-  getmysql(a, b) {
-    let select = []
-    for (let i = 0; i < a.length; i++) {
-      let test = false
-
-      for (var j = 0; j < b.length; j++) {
-        if(a[i].filename === b[j].filename) {
-
-          let views_mysql = []
-          // console.log(b[j].views_mysql)
-          if(b[j].views_mysql) {
-            if(b[j].views_mysql[0].server) {
-                views_mysql = b[j].views_mysql
-            }
-          }
-
-          if(views_mysql.length != a[i].views.length) {
-
-            test = true
-          }
-        }
-      }
-
-      if(test) select.push(a[i])
     }
+  } // dataFlickr
 
-    return select
-  } // flickr
+  dataMysql(file) {
+    for(let i = 0; i < this.data.length; i++) {
+      if(this.data[i].filename === file.filename) {
 
-  flickrNEW(select) {
-    console.log(select)
+        this.data[i].views_mysql = file.views_mysql
 
-    return new Promise((resolve, reject) => {
-      if(select.length === 0) {
-        resolve(true)
+        return true
       }
-      let c = 0
-      select.forEach((f, index, array) => {
-        if(index === 0) {
-          console.log(this.icon + this.module + ' flickr')
-        }
-        this.flickrChange(f)
-
-        // update mongo
-        const search = { name: f.title }
-        const query = { $set: {
-          added: f.added,
-          views_flickr: f.views_flickr,
-          modified_mongo: new Date().getTime()
-        }}
-        this.collection.updateOne(search, query, (err, res) => {
-          if (err) throw err
-          c++
-          if(c === array.length) {
-            console.log(this.icon + this.module + ' flickred')
-            resolve(true)
-          }
-        })
-
-      })
-    })
-  } // flickrNEW
-
-  getflickr(a, b) {
-    let select = []
-    for (let i = 0; i < a.length; i++) {
-      let test = false
-
-      for (var j = 0; j < b.length; j++) {
-        if(a[i].title === b[j].name) {
-          let added = b[j].added
-          if(b[j].added > 1e11) {
-            added = Math.floor(b[j].added / 1000)
-          }
-          const uploaded = parseInt(a[i].dateupload, 10)
-          let views_flickr = []
-          if(b[j].views_flickr) {
-            views_flickr = b[j].views_flickr
-          }
-
-          if(added != uploaded || views_flickr.length != a[i].views) {
-            a[i].added = added
-            if(added > uploaded) {
-              a[i].added =  uploaded
-            }
-            a[i].views_flickr = views_flickr
-            if(views_flickr.length != a[i].views) {
-
-              const newViews = a[i].views - views_flickr.length
-              const now = Math.floor(new Date().getTime()  / 1000)
-              let latest = Math.max(...views_flickr.map(o => o.server))
-              if(latest <= 0) {
-                latest = a[i].added
-              }
-              const range = now - latest
-              const steps = range / newViews
-              for (let k = 0; k < newViews; k++) {
-                a[i].views_flickr.push({ server: Math.round(latest + steps + (steps * k)) })
-              }
-
-            }
-            test = true
-          }
-        }
-      }
-
-      if(test) select.push(a[i])
     }
+  } // dataMysql
 
-    return select
-  } // flickr
+  // ----- mongodb methods
 
-  notflickr(a, b) {
-    let select = []
-    for (let i = 0; i < a.length; i++) {
-      let test = true
-
-      for (var j = 0; j < b.length; j++) {
-        if(a[i].title === b[j].name) {
-          test = false
-        }
-      }
-
-      if(test) select.push(a[i])
-    }
-    // console.log(select)
-    return select
-  } // flickr
-
-  insertNEW(select) {
-    console.log(select)
-
+  mongoConnect(options) {
     return new Promise((resolve, reject) => {
 
-      if(select.length === 0) {
-        resolve(true)
-      }
-      let c = 0
-      select.forEach((f, index, array) => {
-        if(index === 0) {
-          console.log(this.icon + this.module + ' insert')
-        }
-        this.metadata(f, (file) => {
-          let added = new Date().getTime()
-          file.added = Math.floor(added / 1000)
-          this.data.push(file)
-
-          // insert mongo
-          this.collection.insertOne(file, (err, res) => {
-            if (err) throw err
-            c++
-            if(c === array.length) {
-              console.log(this.icon + this.module + ' inserted')
-              resolve(true)
-            }
-          })
-        })
+      const client = new mongodb(options.url, {
+        poolSize: 10,
+        useNewUrlParser: true,
+        connectTimeoutMS: 300000
       })
-    })
-  } // insert
 
-  updateNEW(select) {
-    console.log(select)
-
-    return new Promise((resolve, reject) => {
-
-      if(select.length === 0) {
-        resolve(true)
-      }
-      let c = 0
-      select.forEach((f, index, array) => {
-        if(index === 0) {
-          console.log(this.icon + this.module + ' update')
-        }
-        this.metadata(f, (file) => {
-          //this.change(this.data, file, () => {
-          this.fileChange(file)
-
-            // update mongo
-            const search = { filename: file.filename }
-            const query = { $set: {
-              created: file.created,
-              time: file.time,
-              tags: file.tags,
-              added: file.added,
-              modified: file.modified,
-              modified_mongo: file.modified_mongo,
-              display: file.display,
-              thumbnail: file.thumbnail,
-              orientation: file.orientation,
-              _stats: file._stats,
-              _exif: file._exif,
-            }}
-            this.collection.updateOne(search, query, (err, res) => {
-              if (err) throw err
-              c++
-              if(c === array.length) {
-                console.log(this.icon + this.module + ' updated')
-                resolve(true)
-              }
-            })
-
-
-        })
-      })
-    })
-  } // update
-
-  deleteNEW(select) {
-    return new Promise((resolve, reject) => {
-
-      if(select.length === 0) {
-        resolve(true)
-      }
-      let c = 0
-      select.forEach((file, index, array) => {
-        if(index === 0) {
-          console.log(this.icon + this.module + ' delete')
-        }
-        this.unlink(this.data, file, () => {
-          const query = { filename: file.filename }
-          this.collection.deleteOne(query, (err, object) => {
-            if (err) throw er
-            c++
-            if(c === array.length) {
-              console.log(this.icon + this.module + ' deleted')
-              resolve(true)
-            }
-          })
-        })
-
-      })
-    })
-  } // delete
-
-  metadata(file, callback) {
-    exiftool
-      .read(file.path)
-      .then((tags) => {
-
-        let created
-        let time
-        const name = file.filename.replace('.' + tags.FileTypeExtension, '')
-
-        if(tags.DateCreated) {
-
-          created = new Date(tags.DateCreated)
-          time = 0
-          if(tags.TimeCreated) {
-            if(tags.TimeCreated.hour) {
-              created.setHours(tags.TimeCreated.hour)
-            }
-            if(tags.TimeCreated.minute) {
-              created.setMinutes(tags.TimeCreated.minute)
-            }
-            if(tags.TimeCreated.second) {
-              created.setSeconds(tags.TimeCreated.second)
-            }
-            if(tags.TimeCreated.millisecond) {
-              created.setMilliseconds(tags.TimeCreated.millisecond)
-            }
-            time = tags.TimeCreated
-          }
-          created = created.getTime()
-        } else {
-          created = new Date(tags.CreateDate)
-          created = created.getTime()
-          // time =
-        }
-//      file.filename
-//      file.path
-//      file.added
-//      file.modified
-        file.name        = name
-        file.created     = created
-        file.time        = time
-        file.ftp         = true
-        file.tags        = tags.Keywords
-        file.display     = file.path.replace(file.filename, '') + '.' + this.dsply + '/' + name + this.extension
-        file.thumbnail   = file.path.replace(file.filename, '') + '.' + this.thumb + '/' + name + this.extension
-        file.orientation = tags.ImageWidth > tags.ImageHeight ? 'landscape' : 'portrait'
-//      file._stats
-        file._exif       = tags
-        this.display(file, () => {
-          callback(file)
-        })
-      })
-      .catch(err => console.error(err))
-  } // metadata
-
-  display(file, callback) {
-    const display = file.display.replace(file.name + this.extension, '');
-    if (!fs.existsSync(display)){
-      fs.mkdirSync(display)
-    }
-    const thumbs = file.thumbnail.replace(file.name + this.extension, '');
-    if (!fs.existsSync(thumbs)){
-      fs.mkdirSync(thumbs)
-    }
-    const factor = file.orientation === 'portrait' ? 1 : ( file._exif.ImageWidth / file._exif.ImageHeight )
-    const dsplyWidth = this.dsplyShort * factor
-    const thumbWidth = this.thumbShort * factor
-    gm(file.path)
-      .resizeExact(dsplyWidth)
-      .write(file.display, (err) => {
+      client.connect((err, connect) => {
         if (err) throw err
-        gm(file.path)
-          .resizeExact(thumbWidth)
-          .write(file.thumbnail, (err) => {
-            if (err) throw err
-            callback()
-          })
+
+        this.collection = connect.db(options.db).collection(options.collection)
+        resolve(true)
       })
-  } // display
+    })
+  } // mongoConnect
+
+  mongoAll() {
+    return new Promise((resolve, reject) => {
+
+      this.collection.find().toArray((err, data) => {
+        if (err) throw err
+
+        resolve(data)
+      })
+    })
+  } // mongoAll
+
+  mongoInsert(data) {
+    return new Promise((resolve, reject) => {
+
+      this.collection.insertOne(data, (err, res) => {
+        if (err) throw err
+
+        resolve(true)
+      })
+    })
+  } // mongoInsert
+
+  mongoDelete(search) {
+    return new Promise((resolve, reject) => {
+
+      this.collection.deleteOne(search, (err, object) => {
+        if (err) throw er
+
+        resolve(true)
+      })
+    })
+  } // mongoDelete
+
+  mongoUpdate(search, query) {
+    return new Promise((resolve, reject) => {
+
+      this.collection.updateOne(search, query, (err, res) => {
+        if (err) throw err
+
+        resolve(true)
+      })
+    })
+  } // mongoUpdate
 
 }
 

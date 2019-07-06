@@ -10,7 +10,7 @@ class Flickr extends Extend {
     super()
 
     this.module = this.constructor.name
-    this.icon   = '⨗ '
+    this.icon   = '𝕱  -  '
 
     this.client = new flickr(options.apikey);
 
@@ -28,6 +28,7 @@ class Flickr extends Extend {
 
       const count = result.body.person.photos.count._content
       const a = Math.ceil(result.body.person.photos.count._content/500)
+      const raw = []
       for(let i = 0; i < a; i++) {
         this.client.people.getPublicPhotos({
           user_id: options.userid,
@@ -36,10 +37,12 @@ class Flickr extends Extend {
           per_page: 500
         }).then((result) => {
           result.body.photos.photo.forEach((element) => {
-            this.data.push(element)
+            const data = this.metadata(element)
+            this.data.push(data)
           })
           if(count == this.data.length) {
-            console.log(this.icon + this.log(this.module, this.data.length))
+            console.log(this.icon + this.countName(this.module, this.data.length))
+            // console.log(this.data)
             this.emit('init')
           }
         }).catch((err) => {
@@ -51,6 +54,18 @@ class Flickr extends Extend {
       console.error(this.module, err)
     })
   } // init
+
+  metadata(raw) {
+
+
+    const data = {
+      name: raw.title,
+      added: parseInt(raw.dateupload, 10),
+      views: parseInt(raw.views, 10)
+    }
+
+    return data
+  } // metadata
 
   fetch() {
     // setTimeout(() => {

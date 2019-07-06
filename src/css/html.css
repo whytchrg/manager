@@ -1,0 +1,96 @@
+
+body {
+	font-family: 'Times New Roman', Times, serif;
+	font-size: 12px;
+  margin: 0px;
+	background-color: rgba(250, 250, 250, 1);
+	color: rgba(64, 64, 64, 0.5);
+}
+
+h1, h2, h3, h4, h5 {
+  display: inline;
+}
+
+a, .active, .link {
+	white-space: nowrap;
+	text-decoration: none;
+	color: rgba(0, 0, 0, 0.8);
+}
+
+nav {
+  position: relative;
+  margin: 6px;
+}
+
+main {
+  position: relative;
+  margin-left: 4px;
+  margin-right: 4px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+address {
+  cursor: default;
+}
+
+footer {
+  margin: 6px;
+}
+
+code {
+  font-size: 8px;
+}
+
+figure {
+  margin: 0px;
+}
+
+figcaption {
+  display: none;
+}
+
+details {
+  display: none;
+}
+summary {
+  display: none;
+}
+
+table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  empty-cells: show;
+}
+
+table, th, td {
+  padding: 0px 6px 0px 0px;
+  white-space: nowrap;
+}
+
+.hidden {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.hidden.isvisible {
+  opacity: 1;
+}
+
+#loader {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+
+  border: 8px solid rgba(64, 64, 64, 0.15);
+  border-radius: 46%;
+  border-top: 8px solid rgba(0, 0, 0, 0.3);
+  border-bottom: 8px solid rgba(0, 0, 0, 0.3);
+  animation: spin 1.7s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

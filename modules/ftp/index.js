@@ -9,25 +9,33 @@ class Ftp extends Extend {
 
   constructor(options) { // host, port, user, pass, path
     super()
-    this.icon = '⋏ '
+
+    this.icon = '⫸  -  '
     this.module = this.constructor.name
 
-    this.client  = new ftpClient()
-    this.remote  = options.remote + '/'
-    this.local   = options.local
+    this.path       = options.path
+    this.remote     = options.remote
+    this.display    = options.display
+    this.thumbnails = options.thumbnails
+    this.extension  = options.extension
+    this.options    = {
+      host: options.ftphost,
+      port: options.ftpport,
+      user: options.ftpuser,
+      password: options.ftppass,
+      secure: true,
+      passvTimeout: 20000,
+      keepalive: 20000,
+      secureOptions: { rejectUnauthorized: false }
+    }
+    this.client     = new ftpClient()
 
-    // Array
     this.data = []
 
-    this.extension = '.png'
-    this.dsply = 'display'
-    this.thumb = 'thumbnail'
-
     this.init(options)
+  } // constructor
 
-  }
-
-  init(options) { // init || create this.data
+  init(options) {
 
     const properties = {
       host: options.ftphost,
@@ -49,17 +57,18 @@ class Ftp extends Extend {
 
           // console.log(this.remote)
           if(list.length === 0) {
-            console.log(this.icon + this.log(this.module, this.data.length))
+            console.log(this.icon + this.countName(this.module, this.data.length))
             console.log(this.data)
             this.emit('init')
           } else {
             let c = 0
             list.forEach((ftp, index, array) => {
               const date = Number( new Date(ftp.date).getTime() )
-              this.data[index] = { filename: ftp.name, modified: date }
+              this.data[index] = { filename: ftp.name }
               c++
               if(c === array.length){
-                console.log(this.icon + this.log(this.module, this.data.length))
+                console.log(this.icon + this.countName(this.module, this.data.length))
+                // console.log(this.data)
                 this.emit('init')
               }
             })
@@ -70,97 +79,15 @@ class Ftp extends Extend {
     })
   } // init
 
-  async evaluate(mongos) {
-
-    let p = false
-
-    const a = this.newFiles(mongos, this.data)
-    const b = this.modMongo(mongos, this.data)
-    const c = this.oldFiles(mongos, this.data)
-
-    if(await a && await b && await c){
-
-      if(a.length + b.length + c.length > 0){
-        p = true
-        this.emit('progress')
-      }
-
-      console.log(this.icon + this.log(this.module, a.length) + ' to insert from Mongo')
-      const i = this.upload(a)
-
-      console.log(this.icon + this.log(this.module, b.length) + ' to update from Mongo')
-      const u = this.upload(b, 'update')
-
-      console.log(this.icon + this.log(this.module, c.length) + ' to delete from Mongo')
-      const d = this.delete(c)
-
-      if(await i && await u && await d){
-        if(p) this.emit('done')
-        return true
-      }
-    }
-
-  } // evaluate
-
-  // evaluate(data) {
-  //   console.log('- evaluate ftp')
-  //
-  //
-  //   // Upload
-  //   this.getNew(data, this.data, (select) => {
-  //     console.log(select.length + ' files to upload')
-  //     this.upload(select)
-  //   })
-  //
-  //   // Delete
-  //   this.getDeleted(data, this.data, (select) => {
-  //     console.log(select.length + ' files to delete')
-  //     this.delete(select)
-  //   })
-  //
-  // } // evaluate END !!
-
-  makeupload(files, mode, callback) {
-
-    let upload = []
-    this.client.mkdir(this.remote + '.' + this.dsply + '/', true, (err) => {
-      if (err) throw err
-      this.client.mkdir(this.remote + '.' + this.thumb +'/', true, (err) => {
-        if (err) throw err
-        let counter = 0
-        files.forEach((element, index, array) => {
-          console.log(element);
-          if(mode === 'upload') this.upData(element)
-          const a = {
-            filename: element.filename,
-            path: element.path,
-            remote: this.remote + element.filename
-          }
-          const b = {
-            filename: element.filename,
-            path: element.display,
-            remote: this.remote + '.' + this.dsply + '/' + element.name + this.extension
-          }
-          const c = {
-            filename: element.filename,
-            path: element.thumbnail,
-            remote: this.remote + '.' + this.thumb + '/' + element.name + this.extension
-          }
-          upload.push(a)
-          upload.push(b)
-          upload.push(c)
-          counter++
-          if(counter === array.length){
-            callback(upload)
-          }
-        })
-      })
-    })
-
-  } // makeupload
-
   upload(upload, mode = 'upload') {
     return new Promise((resolve, reject) => {
+
+      if(mode === 'upload') {
+        console.log(this.icon + this.countName(this.module, upload.length) + ' to insert from Files')
+      } else {
+        console.log(this.icon + this.countName(this.module, upload.length) + ' to update from Files')
+      }
+
       if(upload.length === 0) {
         resolve(true)
       }
@@ -169,28 +96,32 @@ class Ftp extends Extend {
         let c = 0
         files.forEach((file, index, array) => {
           if(index === 0) {
-            console.log(this.icon + this.module + ' upload')
+            console.log(this.icon + this.module + ' upload // ' + this.countName('File', files.length / 2))
           }
+          // // console.log(file.path)
+          // const stats = fs.statSync(file.path)
+          // const fileSize = stats.size
+          // let uploadedSize = 0
+          // let uploadfile = fs.createReadStream(file.path)
+          // // let uploadfile = Buffer.alloc(fileSize, file.path)
+          // let d = 0
+          // uploadfile.on('data', (buffer) => {
+          //   // if(d++ === 0) console.log(this.icon + file.log)
+          //
+          //   let segmentLength = buffer.byteLength
+          //   uploadedSize += segmentLength
+          //   let percent = (uploadedSize/fileSize*100).toFixed(2)
+          //   console.log((percent + "%"))
+          //
+          // })
 
-          const stats = fs.statSync(file.path)
-          const fileSize = stats.size
-          let uploadedSize = 0
-          let uploadfile = fs.createReadStream(file.path)
-          uploadfile.on('data', function(buffer) {
-            let segmentLength = buffer.length
-            uploadedSize += segmentLength
-            let percent = (uploadedSize/fileSize*100).toFixed(2)
-            console.log("Progress:\t",(percent + "%"))
+          this.client.put(file.path, file.remote, (err) => {
+            if (err) throw err
 
-          })
-
-          this.client.put(uploadfile, file.remote, () => {
-            // if (err) throw err
-            console.log('uploaded: ' + file.filename)
             c++
             if(c === array.length){
               // files = []
-              console.log(this.icon + this.module + ' uploaded')
+              console.log(this.icon + this.module + ' upload // ' + this.countName('File', files.length / 2) + ' √')
               resolve(true)
             }
 
@@ -203,6 +134,7 @@ class Ftp extends Extend {
 
   delete(files) {
     return new Promise((resolve, reject) => {
+      console.log(this.icon + this.countName(this.module, files.length) + ' to delete from Files')
       if(files.length === 0) {
         resolve(true)
       }
@@ -211,7 +143,7 @@ class Ftp extends Extend {
         if(index === 0) {
           console.log(this.icon + this.module + ' delete')
         }
-        this.offData(file)
+        this.dataUnlink(file)
         this.client.delete(this.remote + file.filename, () => {
           // if (err) throw err
           // console.log(file.filename)
@@ -226,29 +158,49 @@ class Ftp extends Extend {
     })
   } // delete END !!
 
-  changeData(file) {
-    this.data.forEach(function(data, index) {
-      if(data.filename === file.filename){
-        this.data[index] = file
-      }
-    }.bind(this))
-  } // offData END !!
+  makeupload(files, mode, callback) {
 
-  offData(file) {
-    this.data.forEach(function(data, index) {
-      if(data.filename === file.filename){
-        this.data.splice(index, 1)
-      }
-    }.bind(this))
-  } // offData END !!
+    let upload = []
+    this.client.mkdir(this.remote + this.display + '/', true, (err) => {
+      if (err) throw err
+      this.client.mkdir(this.remote + this.thumbnails + '/', true, (err) => {
+        if (err) throw err
+        let counter = 0
+        files.forEach((element, index, array) => {
+          // console.log(element);
+          if(mode === 'upload') this.data.push({ filename: element.filename })
+          const a = {
+            log: element.filename,
+            filename: element.filename,
+            path: this.path + element.filename,
+            remote: this.remote + element.filename
+          }
+          const display = this.display + '/' + element.filename.split('.').slice(0, -1).join('.') + this.extension
+          const b = {
+            log: display,
+            filename: element.filename,
+            path: this.path + display,
+            remote: this.remote + display
+          }
+          const thumbnail = this.thumbnails + '/' + element.filename.split('.').slice(0, -1).join('.') + this.extension
+          const c = {
+            log: thumbnail,
+            filename: element.filename,
+            path: this.path + thumbnail,
+            remote: this.remote + thumbnail
+          }
+          // upload.push(a)
+          upload.push(b)
+          upload.push(c)
+          counter++
+          if(counter === array.length){
+            callback(upload)
+          }
+        })
+      })
+    })
 
-  upData(file) {
-    this.data.push({ filename: file.filename })
-  } // offData END !!
-
-  log_ftp(n) {
-    return (n === 1 ? n + ' ftp' : n + ' ftps');
-  }
+  } // makeupload
 
 }
 

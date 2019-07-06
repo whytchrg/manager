@@ -1,18 +1,80 @@
 <!DOCTYPE html><html><head>
 
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' 'self' src/assist/assist.js">
+  <meta http-equiv="Content-Security-Policy"
+  content="
+    default-src 'self' http://debruen.com;
+    style-src 'self' 'unsafe-inline' http://debruen.com;
+    script-src 'self' 'unsafe-inline' http://debruen.com
+  ">
 
-  <title>ftpSync</title>
+  <title>wtc</title>
 
-  <link rel="stylesheet" href="./src/css/loading.io.css">
+  <link rel="stylesheet" href="./src/css/html.css">
 
-  </script>
 </head><body>
 
-  <footer id="footer"><span>ftp</span></footer>
+  <nav>
+    <span class="category" data-data="a">A</span>
+    <span class="category" data-data="b">B</span>
+    <span class="category" data-data="c">C</span>
+    &#160; | &#160;
+    <span class="color" data-data="bw">Black & White</span> &#160;
+    <span class="color" data-data="color">Color</span>
+  </nav>
 
-  <div id="foreground"><div id="loader" class="lds-ripple"><div></div><div></div></div></div>
+  <main>
+
+    <div id="loader"></div>
+
+    <template>
+
+      <article>
+        <table>
+
+          <tr>
+            <td rowspan="4"><img src="" alt=""></td>
+            <td>filename</td>
+            <td></td>
+            <td>created</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td>added</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>views</td>
+            <td></td>
+            <td>modified</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>flickr views</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+
+        </table>
+      </article>
+
+    </template>
+
+
+  </main>
+
+  <footer id="footer"><span>ftp</span></footer>
 
   <script>
     require('./renderer.js')
