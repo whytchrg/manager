@@ -6,13 +6,13 @@ const Wtc    = require('./modules/wtc')
 
 let wtc = new Wtc({
   path:       process.env.LOCAL, // path to local directory
-  display:    '.display',       // display directory
-  thumbnails: '.thumbnail',     // thumbnails directory
-  extension:  '.png',           // preview file extension
+  display:    '.display',        // display directory
+  thumbnails: '.thumbnail',      // thumbnail directory
+  extension:  '.png',            // preview file extension
 
   url:        process.env.MONGO,
-  db:         pjson.name, // APP name
-  collection: process.env.LOCAL.match(/([^\/]*)\/*$/)[1], // A5
+  db:         pjson.name,                                 // APP name
+  collection: process.env.LOCAL.match(/([^\/]*)\/*$/)[1], // Directory name
   remote:     './public_html/src/' + process.env.LOCAL.match(/([^\/]*)\/*$/)[1] + '/',
   ftphost:    process.env.FTP_HST,
   ftpport:    process.env.FTP_PRT,
