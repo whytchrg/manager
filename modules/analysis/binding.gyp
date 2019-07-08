@@ -27,6 +27,7 @@
             '-I/usr/X11R6/include',
             '-L/usr/X11R6/lib',
             '-lX11',
+            '-lpng',
             '/usr/local/lib/libMagick++-7.Q16HDRI.a'
         ],
         'dependencies': [

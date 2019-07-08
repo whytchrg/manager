@@ -1,14 +1,21 @@
 #include "functions.h"
 #include "include/CImg-2.6.7/CImg.h"
+#define cimg_using_png
 
 std::string cppfunction::hello() {
   return "Hello World";
 }
 
 std::string cppfunction::color(std::string input) {
-  cimg_library::CImg<unsigned char> image("aero3.jpg");
+  const char* imagePath = input.c_str();
+  cimg_library::CImg<unsigned char> image(imagePath);
 
-  return input;
+  std::string output = "bw";
+  if(image.spectrum() > 1) {
+    output = "color";
+  }
+
+  return output;
 }
 
 int cppfunction::add(int a, int b) {
