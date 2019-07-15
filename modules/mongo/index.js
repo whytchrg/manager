@@ -55,7 +55,7 @@ class Mongo extends Extend {
       data.views_flickr = []
       data.views_mysql = []
       data.added = Math.floor(new Date().getTime() / 1000)
-
+      data.modified = new Date().getTime()
       await Promise.all([this.dataPush(data), this.mongoInsert(data), this.preview(data)])
     }
 
@@ -188,11 +188,22 @@ class Mongo extends Extend {
         .then((tags) => {
 
           let created
-          let time
+          let offset = 0
 
-          if(tags.DateCreated) {
+          console.log(tags)
+
+          if(tags.DateTimeCreated) {
+            created = new Date(tags.DateTimeCreated)
+
+            // if(tags.DateTimeCreated.tzoffsetMinutes === 0) {
+            //   offset = created.getTimezoneOffset()
+            // } else if(tags.DateTimeCreated.tzoffsetMinutes) {
+            //   offset = tags.DateTimeCreated.tzoffsetMinutes
+            // }
+
+            // created = created.getTime()
+          } else if(tags.DateCreated) {
             created = new Date(tags.DateCreated)
-            time = 0
 
             if(tags.TimeCreated) {
               if(tags.TimeCreated.hour)        created.setHours(tags.TimeCreated.hour)
@@ -200,12 +211,19 @@ class Mongo extends Extend {
               if(tags.TimeCreated.second)      created.setSeconds(tags.TimeCreated.second)
               if(tags.TimeCreated.millisecond) created.setMilliseconds(tags.TimeCreated.millisecond)
             }
-            created = created.getTime()
-          } else {
 
+            offset = created.getTimezoneOffset()
+
+            // created = created.getTime() + created.getTimezoneOffset() * 60000
+          } else {
             created = new Date(tags.CreateDate)
-            created = created.getTime()
+            offset = created.getTimezoneOffset()
+
+            // created = created.getTime() + created.getTimezoneOffset() * 60000
           }
+
+          console.log(offset)
+          created = created.getTime() + offset * 60000
 
           data.created     = created
           data.tags        = tags.Keywords

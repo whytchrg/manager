@@ -17,7 +17,7 @@ class Display extends Extend {
   } // constructor
 
   init(data) {
-    console.log(data[0])
+    // console.log(data[0])
 
     document.getElementById('loader').style.display = 'block'
 
@@ -32,7 +32,7 @@ class Display extends Extend {
 
     let loaded = []
 
-    console.log(raw)
+    // console.log(raw)
     for(let i = 0; i < data.length; i++) {
       const template = document.importNode(raw, true)
 

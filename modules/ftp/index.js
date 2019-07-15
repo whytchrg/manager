@@ -96,9 +96,9 @@ class Ftp extends Extend {
         let c = 0
         files.forEach((file, index, array) => {
           if(index === 0) {
-            console.log(this.icon + this.module + ' upload // ' + this.countName('File', files.length / 2))
+            console.log(this.icon + this.module + ' upload // ' + this.countName('File', files.length / 3))
           }
-          // // console.log(file.path)
+          // console.log(file.path)
           // const stats = fs.statSync(file.path)
           // const fileSize = stats.size
           // let uploadedSize = 0
@@ -108,10 +108,11 @@ class Ftp extends Extend {
           // uploadfile.on('data', (buffer) => {
           //   // if(d++ === 0) console.log(this.icon + file.log)
           //
-          //   let segmentLength = buffer.byteLength
+          //   let segmentLength = buffer.length
           //   uploadedSize += segmentLength
-          //   let percent = (uploadedSize/fileSize*100).toFixed(2)
-          //   console.log((percent + "%"))
+          //   console.log("Progress:\t" + ((uploadedSize/fileSize*100).toFixed(2) + "%"));
+          //   // let percent = (uploadedSize/fileSize*100).toFixed(2)
+          //   // console.log((percent + "%"))
           //
           // })
 
@@ -121,7 +122,7 @@ class Ftp extends Extend {
             c++
             if(c === array.length){
               // files = []
-              console.log(this.icon + this.module + ' upload // ' + this.countName('File', files.length / 2) + ' √')
+              console.log(this.icon + this.module + ' upload // ' + this.countName('File', files.length / 3) + ' √')
               resolve(true)
             }
 
@@ -189,7 +190,7 @@ class Ftp extends Extend {
             path: this.path + thumbnail,
             remote: this.remote + thumbnail
           }
-          // upload.push(a)
+          upload.push(a)
           upload.push(b)
           upload.push(c)
           counter++

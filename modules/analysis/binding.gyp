@@ -12,9 +12,7 @@
         ],
         "sources": [
             "cpp/main.cpp",
-            "cpp/functions.cpp",
-            "cpp/classes.cpp",
-            "cpp/class.cpp"
+            "cpp/functions.cpp"
         ],
         'include_dirs': [
             "<!@(node -p \"require('node-addon-api').include\")",

@@ -60,7 +60,7 @@ class Comparison {
           input[i].filename = data[j].filename
 
           if(data[j].added !== input[i].added || data[j].views_flickr.length !== input[i].views) {
-            
+
             if(data[j].added < input[i].added) {
               input[i].added = data[j].added
             }
@@ -121,7 +121,7 @@ class Comparison {
       for (var j = 0; j < data.length; j++) {
         if(input[i].filename === data[j].filename) {
 
-          if(input[i].tags.length != data[j].tags.length) test = true
+          // if(input[i].tags.length != data[j].tags.length) test = true
           if(input[i].orientation != data[j].orientation) test = true
           if(input[i].created != data[j].created) test = true
           if(input[i].views_flickr.length != data[j].views_flickr.length) test = true
