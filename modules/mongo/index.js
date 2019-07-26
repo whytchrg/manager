@@ -9,24 +9,43 @@ const fs       = require('fs')
 
 class Mongo extends Extend {
 
-  constructor(options) { // url, db, collection
+  constructor(options) { // path, display, thumbnails, extension
     super()
 
     this.icon   = '𝕄  -  '
     this.module = this.constructor.name
 
+    // Options
+    this.path       = options.path       // Path to main image directory
+    this.display    = options.display    // Display directory
+    this.thumbnails = options.thumbnails // Thumbnail directory
+    this.extension  = options.extension  // Display & Thumbnail file extension
 
-    // settings
-    this.path = options.path
-    this.display = options.display
-    this.thumbnails = options.thumbnails
-    this.extension = options.extension
+    // Settings
+    this.dsplyShort = 600 // Display short side
+    this.thumbShort = 100 // Thumbnail short side
 
-    this.dsplyShort = 600
-    this.thumbShort = 100
-
+    // MongoDB collection object
     this.collection
 
+    /* data array {
+        filename:     ,
+        created:      , // Date created / Foto taken, Artwork made, File CreateDate
+        updated:      , // ?? image changed // image pixel update
+        modified:     , // ?? metadata modified or file update
+        added:        ,
+        views_flickr: ,
+        views_mysql:  ,
+        tags:         ,
+        orientation:  ,
+        width:        ,
+        height:       ,
+        analysis: {
+            brightness: ,
+            saturation: ,
+            fft:
+        }
+    } */
     this.data = []
 
     this.init(options)
@@ -195,17 +214,26 @@ class Mongo extends Extend {
           if(tags.DateTimeCreated) {
             created = new Date(tags.DateTimeCreated)
 
-            // if(tags.DateTimeCreated.tzoffsetMinutes === 0) {
-            //   offset = created.getTimezoneOffset()
-            // } else if(tags.DateTimeCreated.tzoffsetMinutes) {
-            //   offset = tags.DateTimeCreated.tzoffsetMinutes
-            // }
+            // if(tags.DateTimeCreated.tzoffsetMinutes !== null && tags.DateTimeCreated.tzoffsetMinutes !== undefined) {
+            if(tags.DateTimeCreated.tzoffsetMinutes === 0) {
+              offset = created.getTimezoneOffset()
+            }
+
+            console.log(tags.DateTimeCreated)
+            console.log(tags.DateTimeCreated.tzoffsetMinutes)
+            console.log(created.getTimezoneOffset())
+            console.log(offset)
 
             // created = created.getTime()
           } else if(tags.DateCreated) {
             created = new Date(tags.DateCreated)
 
+            console.log(tags.DateCreated)
+
             if(tags.TimeCreated) {
+
+              console.log(tags.TimeCreated)
+
               if(tags.TimeCreated.hour)        created.setHours(tags.TimeCreated.hour)
               if(tags.TimeCreated.minute)      created.setMinutes(tags.TimeCreated.minute)
               if(tags.TimeCreated.second)      created.setSeconds(tags.TimeCreated.second)
@@ -213,6 +241,9 @@ class Mongo extends Extend {
             }
 
             offset = created.getTimezoneOffset()
+
+            console.log(created.getTimezoneOffset())
+            console.log(offset)
 
             // created = created.getTime() + created.getTimezoneOffset() * 60000
           } else {
@@ -222,7 +253,6 @@ class Mongo extends Extend {
             // created = created.getTime() + created.getTimezoneOffset() * 60000
           }
 
-          console.log(offset)
           created = created.getTime() + offset * 60000
 
           data.created     = created
