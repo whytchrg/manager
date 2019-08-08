@@ -52,14 +52,14 @@ class Mongo extends Extend {
   }
 
   async init(options) {
+    const start = Date.now()
 
     await this.mongoConnect(options)
     const raw = await this.mongoAll()
 
     await this.dataInit(raw)
 
-    console.log(this.icon + this.countName(this.module, this.data.length))
-    // console.log(this.data)
+    console.log(this.icon + this.countName(this.module, this.data.length) + ' / ' + (Date.now() - start) / 1000 + ' seconds')
     this.emit('init')
   } // init
 

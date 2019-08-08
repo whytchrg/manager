@@ -33,6 +33,7 @@ class Mysql extends Extend {
   }
 
   async init() {
+    const start = Date.now()
 
     this.httpRequest.body.request = 'init'
     this.httpRequest.body.data = []
@@ -40,7 +41,7 @@ class Mysql extends Extend {
     const raw = await this.mysqlRequest(this.httpRequest)
     await this.dataInit(raw)
 
-    console.log(this.icon + this.countName(this.module, this.data.length))
+    console.log(this.icon + this.countName(this.module, this.data.length)  + ' / ' + (Date.now() - start) / 1000 + ' seconds')
     // console.log(this.data)
     this.emit('init') // emit when done
   } // init

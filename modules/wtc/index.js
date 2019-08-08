@@ -130,6 +130,15 @@ class Wtc extends Comparison {
     }
   } // display
 
+  async data() {
+    if(this.fileInit && this.mongoInit) {
+      const newFiles  = this.newFiles(this.mongo.data, this.file.data)    // new Files       | mongo, file   => file
+      const oldFiles  = this.oldFiles(this.mongo.data, this.file.data)    // Files to delete | mongo, file   => file
+      const modFiles  = this.modFiles(this.mongo.data, this.file.data)    // modified Files  | mongo, file   => file
+  
+    }
+  }
+
   async evaluate() {
 
     if(this.fileInit && this.mongoInit && this.ftpInit && this.flickrInit && this.mysqlInit && !this.progress) {

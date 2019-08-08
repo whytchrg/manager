@@ -18,13 +18,14 @@ class File extends Extend {
   }
 
   init(options) {
+    const start = Date.now()
     let ready = false
     const chokidar = Chokidar.watch(options.path, {ignored: /(^|[\/\\])\../})
 
     chokidar.on('ready', () => {
       ready = true
 
-      console.log(this.icon + this.countName(this.module, this.data.length))
+      console.log(this.icon + this.countName(this.module, this.data.length) + ' / ' + (Date.now() - start) / 1000 + ' seconds')
       // console.log(this.data)
       this.emit('init')
     })

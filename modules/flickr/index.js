@@ -20,6 +20,7 @@ class Flickr extends Extend {
   }
 
   init(options) {
+    const start = Date.now()
 
     this.client.people.getInfo({
       user_id: options.userid
@@ -41,7 +42,7 @@ class Flickr extends Extend {
             this.data.push(data)
           })
           if(count == this.data.length) {
-            console.log(this.icon + this.countName(this.module, this.data.length))
+            console.log(this.icon + this.countName(this.module, this.data.length) + ' / ' + (Date.now() - start) / 1000 + ' seconds')
             // console.log(this.data)
             this.emit('init')
           }

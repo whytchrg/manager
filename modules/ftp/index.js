@@ -36,6 +36,7 @@ class Ftp extends Extend {
   } // constructor
 
   init(options) {
+    const start = Date.now()
 
     const properties = {
       host: options.ftphost,
@@ -67,7 +68,7 @@ class Ftp extends Extend {
               this.data[index] = { filename: ftp.name }
               c++
               if(c === array.length){
-                console.log(this.icon + this.countName(this.module, this.data.length))
+                console.log(this.icon + this.countName(this.module, this.data.length) + ' / ' + (Date.now() - start) / 1000 + ' seconds')
                 // console.log(this.data)
                 this.emit('init')
               }
