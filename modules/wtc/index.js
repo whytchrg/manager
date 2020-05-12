@@ -1,7 +1,6 @@
 
 "use strict"
 
-const Analysis   = require('../analysis')
 const Comparison = require('../comparison')
 const Display    = require('../display')
 const File       = require('../file')
@@ -10,10 +9,6 @@ const Html       = require('../html')
 const Mongo      = require('../mongo')
 const Ftp        = require('../ftp')
 const Mysql      = require('../mysql')
-
-console.log(Object.getOwnPropertyNames(Analysis))
-
-console.log(Analysis.color('../A5/.thumbnail/arw18_05_879.png'))
 
 class Wtc extends Comparison {
 
@@ -60,7 +55,9 @@ class Wtc extends Comparison {
       ftpuser: options.ftpuser,
       ftppass: options.ftppass
     })
-    this.ftpInit = false
+    this.ftpInit     = false
+    this.ftpInitUp   = false
+    this.ftpProgress = false
 
     this.flickr = new Flickr({ // Flickr
       userid: options.userid,
@@ -73,9 +70,15 @@ class Wtc extends Comparison {
       db:    options.db,
       table: options.collection
     })
-    this.mysqlInit = false
+    this.mysqlInit     = false
+    this.mysqlProgress = false
 
     this.progress = false
+
+    // data functionality
+
+    this.dataInit     = false
+    this.dataProgress = false
 
     this.init()
   }
@@ -85,7 +88,7 @@ class Wtc extends Comparison {
     this.file.on('init', () => { // File init
       setTimeout(() => {
         this.fileInit = true
-        this.evaluate()
+        this.data()
       }, this.randomInt(10, 100))
     })
 
@@ -93,8 +96,7 @@ class Wtc extends Comparison {
     this.mongo.on('init', () => { // Mongo init
       setTimeout(() => {
         this.mongoInit = true
-        this.displayInit()
-        this.evaluate()
+        this.data()
       }, this.randomInt(10, 100));
     })
 
@@ -102,7 +104,7 @@ class Wtc extends Comparison {
     this.ftp.on('init', () => { // FTP init
       setTimeout(() => {
         this.ftpInit = true
-        this.evaluate()
+        this.ftpEval()
       }, this.randomInt(10, 100));
     })
 
@@ -110,7 +112,7 @@ class Wtc extends Comparison {
     this.flickr.on('init', () => { // Flickr init
       setTimeout(() => {
         this.flickrInit = true
-        this.evaluate()
+        this.flickrEval()
       }, this.randomInt(10, 100));
     })
 
@@ -118,79 +120,199 @@ class Wtc extends Comparison {
     this.mysql.on('init', () => { // Mysql init
       setTimeout(() => {
         this.mysqlInit = true
-        this.evaluate()
+        this.mysqlInEval()
+        this.mysqlUpEval()
       }, this.randomInt(10, 100));
     })
 
   } // init
 
   async displayInit() {
-    if(this.mongoInit) {
+    if(this.dataInit) {
       this.display.init(this.mongo.data)
     }
   } // display
 
   async data() {
-    if(this.fileInit && this.mongoInit) {
-      const newFiles  = this.newFiles(this.mongo.data, this.file.data)    // new Files       | mongo, file   => file
-      const oldFiles  = this.oldFiles(this.mongo.data, this.file.data)    // Files to delete | mongo, file   => file
-      const modFiles  = this.modFiles(this.mongo.data, this.file.data)    // modified Files  | mongo, file   => file
-  
-    }
-  }
+    if(this.fileInit && this.mongoInit && !this.dataProgress) {
 
-  async evaluate() {
-
-    if(this.fileInit && this.mongoInit && this.ftpInit && this.flickrInit && this.mysqlInit && !this.progress) {
-
-      console.log('-----') // Mongo = base
+      console.log('----- data') // Mongo = base
 
       const newFiles  = this.newFiles(this.mongo.data, this.file.data)    // new Files       | mongo, file   => file
       const oldFiles  = this.oldFiles(this.mongo.data, this.file.data)    // Files to delete | mongo, file   => file
       const modFiles  = this.modFiles(this.mongo.data, this.file.data)    // modified Files  | mongo, file   => file
 
-      const modFlickr = this.modFlickr(this.mongo.data, this.flickr.data) // modified Flickr | mongo, flickr => flickr
-      const modMysql  = this.modMysql(this.mongo.data, this.mysql.data)   // modified Mysql  | mongo, mysql  => mysql
-
-      const newFtp    = this.newFiles(this.ftp.data, this.file.data)      // new Files       | ftp, file => file
-
-      const newMongo  = this.newFiles(this.mysql.data, this.mongo.data)   // new Mongo       | mysql, mongo => mongo
-      const modMongo  = this.modMongo(this.mysql.data, this.mongo.data)   // modified Mongo  | mysql, mongo => mongo
-
-      if(await Promise.all([newFiles, oldFiles, modFiles, modFlickr, modMysql, newFtp, newMongo, modMongo])) {
-        if(newFiles.length + oldFiles.length + modFiles.length + modMysql.length + newFtp.length + newMongo.length + modMongo.length > 0){
-          this.progress = true
+      if(await Promise.all([newFiles, oldFiles, modFiles])) {
+        if(newFiles.length + oldFiles.length + modFiles.length > 0){
+          this.dataProgress = true
         }
+        const mongoInsert = this.mongo.insert(newFiles)
 
-        const insertFile = this.insertFile(newFiles, newFtp)
+        const mongoFile = this.mongo.updateFile(modFiles)
 
         const mongoDelete = this.mongo.delete(oldFiles)
 
-        const updateFile = this.updateFile(modFiles)
+        if(await Promise.all([mongoInsert, mongoFile, mongoDelete])) {
+          console.log('----- data') // Mongo = base
+          this.dataInit = true
 
-        const mongoFlickr = this.mongo.updateFlickr(modFlickr)
+          this.displayInit()
 
-        const mongoMysql = this.mongo.updateMysql(modMysql)
+          this.ftpEval()
 
-        const ftpDelete = this.ftp.delete(oldFiles)
+          if(this.flickrInit) this.flickrEval()
+          if(this.mysqlInit) this.mysqlInEval()
 
-        const mysqlInsert = this.mysql.insert(newMongo)
-
-        const mysqlUpdate = this.mysql.update(modMongo)
-
-        const mysqlDelete = this.mysql.delete(oldFiles)
-
-        if(await Promise.all([insertFile, mongoDelete, updateFile, mongoMysql, ftpDelete, mysqlInsert, mysqlUpdate, mysqlDelete])) {
-          if(this.progress) {
-            this.progress = false
-            this.evaluate()
-            this.displayInit()
+          if(this.dataProgress) {
+            this.dataProgress = false
+            this.data()
           }
         }
       }
     }
+  }
 
-  } // evaluate
+  async ftpEval() {
+    if(this.dataInit && this.ftpInit && !this.ftpProgress) {
+      console.log('----- ftp') // Mongo = base
+
+      const newFtp = this.newFiles(this.ftp.data, this.mongo.data)      // new Files       | ftp, file => file
+      const oldFtp = this.oldFiles(this.ftp.data, this.mongo.data)    // Files to delete | mongo, file   => file
+      // const modFtp = this.modFiles(this.ftp.data, this.mongo.data)    // modified Files  | mongo, file   => file
+
+      if(await Promise.all([newFtp, oldFtp])) {
+        if(newFtp.length + oldFtp.length> 0){
+          this.ftpProgress = true
+        }
+        const ftpInsert = this.ftp.upload(newFtp)
+        // onst ftpFile   = this.ftp.upload(modFtp, 'update')
+        const ftpDelete = this.ftp.delete(oldFtp)
+
+        if(await Promise.all([ftpInsert, ftpDelete])) {
+          console.log('----- ftp') // Mongo = base
+          this.ftpInitUp = true
+          this.mysqlUpEval()
+
+          if(this.ftpProgress) {
+            this.ftpProgress = false
+            this.ftpEval()
+          }
+
+        }
+
+      }
+
+    }
+  }
+
+  async flickrEval() {
+    if(this.dataInit && this.flickrInit) {
+      console.log('----- flickr')
+      this.flickrInit = false
+
+      const modFlickr = await this.modFlickr(this.mongo.data, this.flickr.data) // modified Flickr | mongo, flickr => flickr
+
+      const mongoFlickr = await this.mongo.updateFlickr(modFlickr)
+
+      console.log('----- flickr')
+    }
+  }
+
+  async mysqlInEval() {
+    if(this.dataInit && this.mysqlInit) {
+      console.log('----- mysql IN')
+      // this.mysqlInit = false
+
+      const modMysql  = await this.modMysql(this.mongo.data, this.mysql.data)   // modified Mysql  | mongo, mysql  => mysql
+      const mongoMysql = await this.mongo.updateMysql(modMysql)
+
+      console.log('----- mysql IN')
+    }
+  }
+
+  async mysqlUpEval() {
+    if(this.ftpInitUp && this.mysqlInit && !this.mysqlProgress) {
+      console.log('----- mysql UP')
+
+      const newMongo = this.newFiles(this.mysql.data, this.mongo.data)   // new Mongo       | mysql, mongo => mongo
+      const modMongo = this.modMongo(this.mysql.data, this.mongo.data)   // modified Mongo  | mysql, mongo => mongo
+      const oldMongo = this.oldFiles(this.mysql.data, this.mongo.data)    // Files to delete | mongo, file   => file
+
+      if(await Promise.all([newMongo, modMongo, oldMongo])) {
+        if(newMongo.length + modMongo.length + oldMongo.length > 0){
+          this.mysqlProgress = true
+        }
+        const mysqlInsert = this.mysql.insert(newMongo)
+        const mysqlUpdate = this.mysql.update(modMongo)
+        const mysqlDelete = this.mysql.delete(oldMongo)
+
+        if(await Promise.all([mysqlInsert, mysqlUpdate, mysqlDelete])) {
+          console.log('----- mysql UP')
+
+          if(this.mysqlProgress) {
+            this.mysqlProgress = false
+            this.mysqlUpEval()
+          }
+
+        }
+
+      }
+
+    }
+  }
+
+  // async evaluate() {
+  //
+  //   if(this.fileInit && this.mongoInit && this.ftpInit && this.flickrInit && this.mysqlInit && !this.progress) {
+  //
+  //     console.log('-----') // Mongo = base
+  //
+  //     // const newFiles  = this.newFiles(this.mongo.data, this.file.data)    // new Files       | mongo, file   => file
+  //     // const oldFiles  = this.oldFiles(this.mongo.data, this.file.data)    // Files to delete | mongo, file   => file
+  //     // const modFiles  = this.modFiles(this.mongo.data, this.file.data)    // modified Files  | mongo, file   => file
+  //     //
+  //     // const modFlickr = this.modFlickr(this.mongo.data, this.flickr.data) // modified Flickr | mongo, flickr => flickr
+  //     // const modMysql  = this.modMysql(this.mongo.data, this.mysql.data)   // modified Mysql  | mongo, mysql  => mysql
+  //
+  //     // const newFtp    = this.newFiles(this.ftp.data, this.file.data)      // new Files       | ftp, file => file
+  //
+  //     // const newMongo  = this.newFiles(this.mysql.data, this.mongo.data)   // new Mongo       | mysql, mongo => mongo
+  //     // const modMongo  = this.modMongo(this.mysql.data, this.mongo.data)   // modified Mongo  | mysql, mongo => mongo
+  //
+  //     if(await Promise.all([newFiles, oldFiles, modFiles, modFlickr, modMysql, newFtp, newMongo, modMongo])) {
+  //       if(newFiles.length + oldFiles.length + modFiles.length + modMysql.length + newFtp.length + newMongo.length + modMongo.length > 0){
+  //         this.progress = true
+  //       }
+  //
+  //       // const insertFile = this.insertFile(newFiles, newFtp)
+  //       //
+  //       // const mongoDelete = this.mongo.delete(oldFiles)
+  //       //
+  //       // const updateFile = this.updateFile(modFiles)
+  //       //
+  //       // const mongoFlickr = this.mongo.updateFlickr(modFlickr)
+  //       //
+  //       // const mongoMysql = this.mongo.updateMysql(modMysql)
+  //       //
+  //       // const ftpDelete = this.ftp.delete(oldFiles)
+  //
+  //       const mysqlInsert = this.mysql.insert(newMongo)
+  //
+  //       const mysqlUpdate = this.mysql.update(modMongo)
+  //
+  //       const mysqlDelete = this.mysql.delete(oldFiles)
+  //
+  //       if(await Promise.all([insertFile, mongoDelete, updateFile, mongoMysql, ftpDelete, mysqlInsert, mysqlUpdate, mysqlDelete])) {
+  //         if(this.progress) {
+  //           this.progress = false
+  //           this.evaluate()
+  //           this.displayInit()
+  //         }
+  //       }
+  //     }
+  //   }
+  //
+  // } // evaluate
 
   async insertFile(newFiles, newFtp) {
     const mongoInsert = await this.mongo.insert(newFiles)

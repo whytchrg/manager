@@ -47,6 +47,7 @@ class Display extends Extend {
       template.dataset.created     = data[i].created
       template.dataset.added       = data[i].added
       template.dataset.modified    = data[i].modified
+      template.dataset.updated     = data[i].updated
       template.dataset.views       = data[i].views_mysql.length
       template.dataset.flickrViews = data[i].views_flickr.length
       template.dataset.orientation = data[i].orientation
@@ -61,6 +62,7 @@ class Display extends Extend {
       table.rows[2].cells[1].innerHTML = data[i].views_mysql.length
       table.rows[2].cells[3].innerHTML = this.strDate(data[i].modified)
       table.rows[3].cells[1].innerHTML = data[i].views_flickr.length
+      table.rows[3].cells[3].innerHTML = this.strDate(data[i].updated)
 
       table.rows[0].cells[0].style.width = width + 'px';
 

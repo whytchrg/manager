@@ -4,6 +4,20 @@ const pjson  = require('./package.json')
 
 const Wtc    = require('./modules/wtc')
 
+    const Analyse = require('./modules/analysis').Analysis
+
+    const img = "../files/arw15_10_093.jpg"
+
+    analysis = new Analyse(img)
+
+    console.log('path: ' + analysis.path())
+
+    console.log('color: ' + analysis.color())
+
+    console.log('brightness: ' + analysis.brightness())
+
+    console.log('saturation: ' + analysis.saturation())
+
 let wtc = new Wtc({
   path:       process.env.LOCAL, // path to local directory
   display:    '.display',        // display directory

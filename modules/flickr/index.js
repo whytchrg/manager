@@ -19,68 +19,79 @@ class Flickr extends Extend {
     this.init(options)
   }
 
-  init(options) {
+  async init(options) {
     const start = Date.now()
 
-    this.client.people.getInfo({
-      user_id: options.userid
+    this.data = await this.publicPhotos(options)
 
-    }).then((result) => {
-
-      const count = result.body.person.photos.count._content
-      const a = Math.ceil(result.body.person.photos.count._content/500)
-      const raw = []
-      for(let i = 0; i < a; i++) {
-        this.client.people.getPublicPhotos({
-          user_id: options.userid,
-          extras: ['date_upload', 'date_taken', 'last_update', 'tags', 'views'],
-          page: i + 1,
-          per_page: 500
-        }).then((result) => {
-          result.body.photos.photo.forEach((element) => {
-            const data = this.metadata(element)
-            this.data.push(data)
-          })
-          if(count == this.data.length) {
-            console.log(this.icon + this.countName(this.module, this.data.length) + ' / ' + (Date.now() - start) / 1000 + ' seconds')
-            // console.log(this.data)
-            this.emit('init')
-          }
-        }).catch((err) => {
-          console.error(this.module, err)
-        })
-      }
-    })
-    .catch((err) => {
-      console.error(this.module, err)
-    })
+    // console.log(this.data[0])
+    console.log(this.icon + this.countName(this.module, this.data.length) + ' / ' + (Date.now() - start) / 1000 + ' seconds')
+    this.emit('init')
   } // init
 
-  metadata(raw) {
+  publicPhotos(options) {
+    return new Promise((resolve, reject) => {
 
+      this.client.people.getInfo({
+        user_id: options.userid
+
+      }).then((result) => {
+
+        const count = result.body.person.photos.count._content
+        const a = Math.ceil(result.body.person.photos.count._content/500)
+        const raw = []
+        for(let i = 0; i < a; i++) {
+          this.client.people.getPublicPhotos({
+            user_id: options.userid,
+            extras: ['date_upload', 'views'],
+            page: i + 1,
+            per_page: 500
+          }).then((result) => {
+            result.body.photos.photo.forEach((element) => {
+              const data = this.metaData(element)
+              raw.push(data)
+            })
+            if(count == raw.length) {
+              resolve(raw)
+            }
+          }).catch((err) => {
+            console.error(this.module + ' A', err)
+          })
+        }
+      })
+      .catch((err) => {
+        console.error(this.module + ' B', err)
+      })
+    })
+  }
+
+  metaData(raw) {
 
     const data = {
       name: raw.title,
       added: parseInt(raw.dateupload, 10),
-      views: parseInt(raw.views, 10)
+      views: parseInt(raw.views, 10),
+      favs: false,
+      id: raw.id,
+      secret: raw.secret
     }
-
     return data
+
   } // metadata
 
   fetch() {
     // setTimeout(() => {
 
     // }, 1)
-    this.data.forEach(() => {
-      // this.client.photos.getInfo({
-      //   photo_id: element.id,
-      //   secret: element.secret
-      // }).then(function (result) {
-      //   this.flickr.push(result.body.photo)
-      // }.bind(this)).catch(function (err) {
-      //   console.error('bonk', err)
-      // })
+    this.data.forEach((element) => {
+      this.client.photos.getInfo({
+        photo_id: element.id,
+        secret: element.secret
+      }).then(function (result) {
+        this.flickr.push(result.body.photo)
+      }.bind(this)).catch(function (err) {
+        console.error('bonk', err)
+      })
     })
   } // fetch
 

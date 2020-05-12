@@ -49,7 +49,7 @@ class Comparison {
     return select
   } // modFiles
 
-  modFlickr(data, input) {
+  modFlickr(data, input) { // mongo -> flickr
     let select = []
     for (let i = 0; i < input.length; i++) {
       let test = false
@@ -58,15 +58,16 @@ class Comparison {
         if(data[j].filename.split('.').slice(0, -1).join('.') === input[i].name) {
 
           input[i].filename = data[j].filename
+          if(data[j].added < input[i].added) {
+            input[i].added = data[j].added
+          }
+          if(data[j].added != input[i].added || data[j].views_flickr.length != input[i].views) {
 
-          if(data[j].added !== input[i].added || data[j].views_flickr.length !== input[i].views) {
-
-            if(data[j].added < input[i].added) {
-              input[i].added = data[j].added
-            }
+            console.log("added: " + data[j].added + " -> " + input[i].added);
+            console.log("views: " + data[j].views_flickr.length + " -> " + input[i].views);
 
             input[i].views_flickr = data[j].views_flickr
-            if(data[j].views_flickr.length !== input[i].views) {
+            if(data[j].views_flickr.length != input[i].views) {
 
               const newViews = input[i].views - data[j].views_flickr.length
               const now = Math.floor(new Date().getTime()  / 1000)
@@ -81,6 +82,8 @@ class Comparison {
               }
 
             }
+            console.log("new views: " + input[i].views_flickr.length);
+            console.log("filename: " + input[i].filename);
             test = true
           }
         }
@@ -122,11 +125,32 @@ class Comparison {
         if(input[i].filename === data[j].filename) {
 
           // if(input[i].tags.length != data[j].tags.length) test = true
-          if(input[i].orientation != data[j].orientation) test = true
-          if(input[i].created != data[j].created) test = true
-          if(input[i].views_flickr.length != data[j].views_flickr.length) test = true
-          if(input[i].added != data[j].added) test = true
-          if(input[i].modified != data[j].modified) test = true
+          if(input[i].orientation != data[j].orientation) {
+            test = true
+            //console.log(input[i].filename + " orientation");
+            //console.log("input: " + input[i].orientation + " data: " + data[j].orientation);
+          }
+          if(input[i].created != data[j].created) {
+            test = true
+            //console.log(input[i].filename + " created");
+            //console.log("input: " + input[i].created + " data: " + data[j].created);
+          }
+          if(input[i].views_flickr.length != data[j].views_flickr.length) {
+            test = true
+            //console.log(input[i].filename + " views_flickr");
+            //console.log("input: " + input[i].views_flickr.length + " data: " + data[j].views_flickr.length );
+          }
+          if(input[i].added != data[j].added) {
+            test = true
+            //console.log(input[i].filename + " added");
+            //console.log("input: " + input[i].added + " data: " + data[j].added );
+          }
+          if(input[i].modified != data[j].modified) {
+            test = true
+            //console.log(input[i].filename + " modified");
+            //console.log("input: " + input[i].modified + " data: " + data[j].modified );
+          }
+
         }
       }
 

@@ -28,24 +28,6 @@ class Mongo extends Extend {
     // MongoDB collection object
     this.collection
 
-    /* data array {
-        filename:     ,
-        created:      , // Date created / Foto taken, Artwork made, File CreateDate
-        updated:      , // ?? image changed // image pixel update
-        modified:     , // ?? metadata modified or file update
-        added:        ,
-        views_flickr: ,
-        views_mysql:  ,
-        tags:         ,
-        orientation:  ,
-        width:        ,
-        height:       ,
-        analysis: {
-            brightness: ,
-            saturation: ,
-            fft:
-        }
-    } */
     this.data = []
 
     this.init(options)
@@ -60,6 +42,7 @@ class Mongo extends Extend {
     await this.dataInit(raw)
 
     console.log(this.icon + this.countName(this.module, this.data.length) + ' / ' + (Date.now() - start) / 1000 + ' seconds')
+
     this.emit('init')
   } // init
 
@@ -106,10 +89,16 @@ class Mongo extends Extend {
     for (var i = 0; i < file.length; i++) {
       const data   = await this.exif(file[i])
 
+      // console.log(data.created + ' created *')
+      // console.log(data.modified + ' modified *')
+      // console.log(data.updated + ' updated *')
+      // console.log(data.added + ' added *')
+
       const search = { filename: data.filename }
       const update = {
         modified: data.modified,
         created: data.created,
+        updated: data.updated,
         tags: data.tags,
         orientation: data.orientation,
         width: data.width,
@@ -168,37 +157,6 @@ class Mongo extends Extend {
 
   //
 
-  metadata(raw) {
-
-    if(!Array.isArray(raw.views_flickr)) {
-      raw.views_flickr = []
-    }
-
-    if(!Array.isArray(raw.views_mysql)) {
-      raw.views_mysql = []
-    }
-
-    let added = raw.added
-    if(raw.added > 1e11) {
-      added = Math.floor(raw.added / 1000)
-    }
-
-    const data = {
-      filename:     raw.filename,
-      created:      raw.created,
-      modified:     raw.modified,
-      added: added,
-      views_flickr: raw.views_flickr,
-      views_mysql: raw.views_mysql,
-      tags: raw.tags,
-      orientation: raw.orientation,
-      width: raw.width,
-      height: raw.height
-    }
-
-    return data
-  } // metadata
-
   exif(data) {
     return new Promise((resolve, reject) => {
 
@@ -206,56 +164,43 @@ class Mongo extends Extend {
         .read(this.path + data.filename)
         .then((tags) => {
 
-          let created
+          let created // Date Created
           let offset = 0
-
-          console.log(tags)
 
           if(tags.DateTimeCreated) {
             created = new Date(tags.DateTimeCreated)
-
-            // if(tags.DateTimeCreated.tzoffsetMinutes !== null && tags.DateTimeCreated.tzoffsetMinutes !== undefined) {
             if(tags.DateTimeCreated.tzoffsetMinutes === 0) {
               offset = created.getTimezoneOffset()
             }
-
-            console.log(tags.DateTimeCreated)
-            console.log(tags.DateTimeCreated.tzoffsetMinutes)
-            console.log(created.getTimezoneOffset())
-            console.log(offset)
-
-            // created = created.getTime()
           } else if(tags.DateCreated) {
             created = new Date(tags.DateCreated)
-
-            console.log(tags.DateCreated)
-
             if(tags.TimeCreated) {
-
-              console.log(tags.TimeCreated)
-
               if(tags.TimeCreated.hour)        created.setHours(tags.TimeCreated.hour)
               if(tags.TimeCreated.minute)      created.setMinutes(tags.TimeCreated.minute)
               if(tags.TimeCreated.second)      created.setSeconds(tags.TimeCreated.second)
               if(tags.TimeCreated.millisecond) created.setMilliseconds(tags.TimeCreated.millisecond)
             }
-
             offset = created.getTimezoneOffset()
-
-            console.log(created.getTimezoneOffset())
-            console.log(offset)
-
-            // created = created.getTime() + created.getTimezoneOffset() * 60000
           } else {
             created = new Date(tags.CreateDate)
             offset = created.getTimezoneOffset()
-
-            // created = created.getTime() + created.getTimezoneOffset() * 60000
           }
 
           created = created.getTime() + offset * 60000
 
+          let updated // Date Updated
+
+          if(tags.ModifyDate) {
+            updated = new Date(tags.ModifyDate)
+            let offsetM = 0
+            if(tags.ModifyDate.tzoffsetMinutes === 0) {
+              offsetM = created.getTimezoneOffset()
+            }
+            updated = updated.getTime() + offsetM * 60000
+          }
+
           data.created     = created
+          data.updated     = updated
           data.tags        = tags.Keywords
           data.orientation = tags.ImageWidth > tags.ImageHeight ? 'landscape' : 'portrait'
           data.width       = tags.ImageWidth
@@ -313,6 +258,38 @@ class Mongo extends Extend {
     return true
   } // unlink
 
+  metadata(raw) {
+
+    if(!Array.isArray(raw.views_flickr)) {
+      raw.views_flickr = []
+    }
+
+    if(!Array.isArray(raw.views_mysql)) {
+      raw.views_mysql = []
+    }
+
+    let added = raw.added
+    if(raw.added > 1e11) {
+      added = Math.floor(raw.added / 1000)
+    }
+
+    const data = {
+      filename:     raw.filename,
+      created:      raw.created,
+      modified:     raw.modified,
+      updated:      raw.updated,
+      added: added,
+      views_flickr: raw.views_flickr,
+      views_mysql: raw.views_mysql,
+      tags: raw.tags,
+      orientation: raw.orientation,
+      width: raw.width,
+      height: raw.height
+    }
+
+    return data
+  } // metadata
+
   dataFile(data) {
     for(let i = 0; i < this.data.length; i++) {
       if(this.data[i].filename === data.filename) {
@@ -357,16 +334,13 @@ class Mongo extends Extend {
 
   mongoConnect(options) {
     return new Promise((resolve, reject) => {
-
       const client = new mongodb(options.url, {
         poolSize: 10,
         useNewUrlParser: true,
         connectTimeoutMS: 300000
       })
-
       client.connect((err, connect) => {
         if (err) throw err
-
         this.collection = connect.db(options.db).collection(options.collection)
         resolve(true)
       })
@@ -375,10 +349,8 @@ class Mongo extends Extend {
 
   mongoAll() {
     return new Promise((resolve, reject) => {
-
       this.collection.find().toArray((err, data) => {
         if (err) throw err
-
         resolve(data)
       })
     })
@@ -386,10 +358,8 @@ class Mongo extends Extend {
 
   mongoInsert(data) {
     return new Promise((resolve, reject) => {
-
       this.collection.insertOne(data, (err, res) => {
         if (err) throw err
-
         resolve(true)
       })
     })
@@ -397,10 +367,8 @@ class Mongo extends Extend {
 
   mongoDelete(search) {
     return new Promise((resolve, reject) => {
-
       this.collection.deleteOne(search, (err, object) => {
-        if (err) throw er
-
+        if (err) throw err
         resolve(true)
       })
     })
@@ -408,10 +376,8 @@ class Mongo extends Extend {
 
   mongoUpdate(search, query) {
     return new Promise((resolve, reject) => {
-
       this.collection.updateOne(search, query, (err, res) => {
         if (err) throw err
-
         resolve(true)
       })
     })

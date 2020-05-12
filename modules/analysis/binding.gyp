@@ -12,7 +12,9 @@
         ],
         "sources": [
             "cpp/main.cpp",
-            "cpp/functions.cpp"
+            "cpp/functions.cpp",
+            "cpp/analysis.cpp",
+            "cpp/analyse.cpp"
         ],
         'include_dirs': [
             "<!@(node -p \"require('node-addon-api').include\")",
@@ -25,8 +27,7 @@
             '-I/usr/X11R6/include',
             '-L/usr/X11R6/lib',
             '-lX11',
-            '-lpng',
-            '/usr/local/lib/libMagick++-7.Q16HDRI.a'
+            '-lpng'
         ],
         'dependencies': [
             "<!(node -p \"require('node-addon-api').gyp\")"
