@@ -70,7 +70,7 @@ class Mysql extends Extend {
     let data = {} // create object with index
     let count = 50
     if(select.length < 50) count = select.length
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < select.length; i++) {
 
       data[i]= await this.makeInsert(select[i])
       await this.dataUpdate(select[i])
@@ -127,10 +127,8 @@ class Mysql extends Extend {
     return {
       filename: file.filename,
       name: file.filename.split('.').slice(0, -1).join('.'),
-      modified: file.modified,
       created: file.created,
-      added: file.added,
-      views_flickr: JSON.stringify(file.views_flickr).replace(/[\/\(\)\']/g, "\\$&"),
+      algorithm: file.algorithm,
       tags: JSON.stringify(file.tags).replace(/[\/\(\)\']/g, "\\$&"),
       display: this.dsply + file.filename.split('.').slice(0, -1).join('.') + this.extension,
       thumbnail: this.thumb + file.filename.split('.').slice(0, -1).join('.') + this.extension,
@@ -159,8 +157,7 @@ class Mysql extends Extend {
     let file = {
       filename: raw.filename,
       created: parseInt(raw.created, 10),
-      added: parseInt(raw.added, 10),
-      modified: parseInt(raw.modified, 10),
+      algorithm: parseFloat(raw.algorithm),
       orientation: raw.orientation
     }
 
@@ -189,21 +186,6 @@ class Mysql extends Extend {
       }
     }
     file.views_mysql = views
-
-    let views_flickr = []
-
-    if(typeof raw.views_flickr === 'string') {
-      if(raw.views_flickr.includes('server')){
-        const rawFlickr = JSON.parse(raw.views_flickr)
-        for(let j = 0; j < rawFlickr.length; j++) {
-
-          let flickr = rawFlickr[j]
-          flickr.server = parseInt(flickr.server, 10)
-          views_flickr.push(flickr)
-        }
-      }
-    }
-    file.views_flickr = views_flickr
 
     return file
   } // metadata

@@ -155,6 +155,26 @@ class Mongo extends Extend {
     return true
   } // updateMysql
 
+  async updateAlgorithm(select) {
+    console.log(this.icon + this.countName(this.module, select.length) + ' to update from Algorithm')
+    if (select.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('Mysql', select.length))
+
+    for (var i = 0; i < select.length; i++) {
+      const file   = select[i]
+
+      const search = { filename: file.filename }
+      const update = {
+        algorithm: file.algorithm
+      }
+      const query = { $set: update }
+
+      await Promise.all([this.dataAlgorithm(file), this.mongoUpdate(search, query)])
+    }
+
+    if (select.length > 0) console.log(this.icon + this.module + ' updated // ' + this.countName('Algorithm', select.length) + ' √')
+    return true
+  } // updateMysql
+
   //
 
   exif(data) {
@@ -269,8 +289,8 @@ class Mongo extends Extend {
     }
 
     let added = raw.added
-    if(raw.added > 1e11) {
-      added = Math.floor(raw.added / 1000)
+    if(raw.added < 1e11) {
+      added = raw.added * 1000
     }
 
     const data = {
@@ -281,6 +301,7 @@ class Mongo extends Extend {
       added: added,
       views_flickr: raw.views_flickr,
       views_mysql: raw.views_mysql,
+      algorithm: raw.algorithm,
       tags: raw.tags,
       orientation: raw.orientation,
       width: raw.width,
@@ -329,6 +350,17 @@ class Mongo extends Extend {
       }
     }
   } // dataMysql
+
+  dataAlgorithm(file) {
+    for(let i = 0; i < this.data.length; i++) {
+      if(this.data[i].filename === file.filename) {
+
+        this.data[i].algorithm = file.algorithm
+
+        return true
+      }
+    }
+  } // dataAlgorithm
 
   // ----- mongodb methods
 
