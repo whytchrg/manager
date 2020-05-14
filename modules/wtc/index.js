@@ -2,10 +2,10 @@
 "use strict"
 
 const Comparison = require('../comparison')
-const Display    = require('../display')
+// const Display    = require('../display')
 const File       = require('../file')
 const Flickr     = require('../flickr')
-const Html       = require('../html')
+// const Html       = require('../html')
 const Mongo      = require('../mongo')
 const Ftp        = require('../ftp')
 const Mysql      = require('../mysql')
@@ -33,16 +33,6 @@ class Wtc extends Comparison {
       collection: options.collection
     })
     this.mongoInit = false
-
-    this.html = new Html({ // Html
-      option: 'option'
-    })
-
-    this.display = new Display({ // Display
-      path:       options.path,
-      thumbnails: options.thumbnails,
-      extension:  options.extension
-    })
 
     this.ftp = new Ftp({ // Ftp
       path:       options.path,
@@ -76,7 +66,6 @@ class Wtc extends Comparison {
 
     this.algorithm = new Algorithm() // Algorithm
     this.algorithmEval = false
-    // this.progress = false
 
     // data functionality
 
@@ -135,10 +124,8 @@ class Wtc extends Comparison {
 
   } // init
 
-  async displayInit() {
-    if(this.dataInit) {
-      this.display.init(this.mongo.data)
-    }
+  display() {
+    this.emit('display', this.mongo.data)
   } // display
 
   async data() {
@@ -164,7 +151,7 @@ class Wtc extends Comparison {
           console.log('----- data √') // Mongo = base
           this.dataInit = true
 
-          this.displayInit()
+          this.display()
           this.ftpEval()
 
           if(this.flickrInit) this.flickrEval()
@@ -177,7 +164,7 @@ class Wtc extends Comparison {
         }
       }
     }
-  }
+  } // data
 
   async ftpEval() {
     if(this.dataInit && this.ftpInit && !this.ftpProgress) {
@@ -185,14 +172,12 @@ class Wtc extends Comparison {
 
       const newFtp = this.newFiles(this.ftp.data, this.mongo.data)      // new Files       | ftp, file => file
       const oldFtp = this.oldFiles(this.ftp.data, this.mongo.data)      // Files to delete | mongo, file   => file
-      // const modFtp = this.modFiles(this.ftp.data, this.mongo.data)   // modified Files  | mongo, file   => file
 
       if(await Promise.all([newFtp, oldFtp])) {
         if(newFtp.length + oldFtp.length> 0){
           this.ftpProgress = true
         }
         const ftpInsert = this.ftp.upload(newFtp)
-        // onst ftpFile   = this.ftp.upload(modFtp, 'update')
         const ftpDelete = this.ftp.delete(oldFtp)
 
         if(await Promise.all([ftpInsert, ftpDelete])) {
@@ -204,13 +189,10 @@ class Wtc extends Comparison {
             this.ftpProgress = false
             this.ftpEval()
           }
-
         }
-
       }
-
     }
-  }
+  } // ftpEval
 
   async flickrEval() {
     if(this.dataInit && this.flickrInit) {
@@ -224,7 +206,7 @@ class Wtc extends Comparison {
       this.compute()
       console.log('----- flickr √')
     }
-  }
+  } // flickrEval
 
   async mysqlInEval() {
     if(this.dataInit && this.mysqlInit) {
@@ -238,7 +220,7 @@ class Wtc extends Comparison {
       this.compute()
       console.log('----- mysql IN √')
     }
-  }
+  } // mysqlInEval
 
   async compute() {
     if(this.dataInit && this.flickrGot && this.mysqlGot) {
@@ -254,7 +236,7 @@ class Wtc extends Comparison {
       this.mysqlUpEval()
       console.log('----- algorithm √')
     }
-  }
+  } // compute
 
   async mysqlUpEval() {
     if(this.ftpInitUp && this.mysqlInit && this.algorithmEval && !this.mysqlProgress) {
@@ -285,19 +267,7 @@ class Wtc extends Comparison {
       }
 
     }
-  }
-
-  // async insertFile(newFiles, newFtp) {
-  //   const mongoInsert = await this.mongo.insert(newFiles)
-  //   const ftpInsert = await this.ftp.upload(newFtp)
-  //   return true
-  // } // insertFile
-  //
-  // async updateFile(modFiles) {
-  //   const mongoFile = await this.mongo.updateFile(modFiles)
-  //   const ftpFile = await this.ftp.upload(modFiles, 'update')
-  //   return true
-  // } // updateFile
+  } // mysqlUpEval
 
 } // Wtc
 

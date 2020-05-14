@@ -1,9 +1,12 @@
 
 "use strict"
 
-class Comparison {
+const Events = require('events')
+
+class Comparison extends Events{
 
   constructor(options) {
+    super()
 
   }
 

@@ -2,21 +2,22 @@
 const dotenv = require('dotenv').config()
 const pjson  = require('./package.json')
 
-const Wtc    = require('./modules/wtc')
+const Wtc     = require('./modules/wtc')
+const Display = require('./modules/display')
 
-    const Analyse = require('./modules/analysis').Analysis
-
-    const img = "../files/arw15_10_093.jpg"
-
-    analysis = new Analyse(img)
-
-    console.log('path: ' + analysis.path())
-
-    console.log('color: ' + analysis.color())
-
-    console.log('brightness: ' + analysis.brightness())
-
-    console.log('saturation: ' + analysis.saturation())
+    // const Analyse = require('./modules/analysis').Analysis
+    //
+    // const img = "../files/arw15_10_093.jpg"
+    //
+    // analysis = new Analyse(img)
+    //
+    // console.log('path: ' + analysis.path())
+    //
+    // console.log('color: ' + analysis.color())
+    //
+    // console.log('brightness: ' + analysis.brightness())
+    //
+    // console.log('saturation: ' + analysis.saturation())
 
 let wtc = new Wtc({
   path:       process.env.LOCAL, // path to local directory
@@ -35,4 +36,14 @@ let wtc = new Wtc({
   http:       process.env.HTTP,
   userid:     process.env.FLICKR_USER_ID,
   apikey:     process.env.FLICKR_API_KEY
+})
+
+let display = new Display({ // Display
+  path:       process.env.LOCAL,
+  thumbnails: '.thumbnail',
+  extension:  '.png'
+})
+
+wtc.on('display', (data) => { // Mysql init
+  display.init(data)
 })

@@ -13,9 +13,7 @@ class Extend extends Events {
   // ----- data methods
 
   dataPush(data) {
-
     this.data.push(data)
-
     return true
   } // dataPush
 
