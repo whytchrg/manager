@@ -167,24 +167,15 @@ class Comparison {
           }
           if(input[i].algorithm != data[j].algorithm) {
             test = true
-            // console.log(input[i].filename + " algorithm");
-            // console.log("input: " + input[i].algorithm + " data: " + data[j].algorithm);
+            // console.log(input[i].filename + " algorithm")
+            // console.log("input: " + input[i].algorithm + " data: " + data[j].algorithm)
           }
-          // if(input[i].views_flickr.length != data[j].views_flickr.length) {
-          //   test = true
-          //   //console.log(input[i].filename + " views_flickr");
-          //   //console.log("input: " + input[i].views_flickr.length + " data: " + data[j].views_flickr.length );
-          // }
-          // if(input[i].added != data[j].added) {
-          //   test = true
-          //   //console.log(input[i].filename + " added");
-          //   //console.log("input: " + input[i].added + " data: " + data[j].added );
-          // }
-          // if(input[i].modified != data[j].modified) {
-          //   test = true
-          //   //console.log(input[i].filename + " modified");
-          //   //console.log("input: " + input[i].modified + " data: " + data[j].modified );
-          // }
+          if(JSON.stringify(input[i].tags) !== JSON.stringify(data[j].tags)) {
+            test = true
+            // console.log(input[i].filename + " tags")
+            // console.log("mongo: " + typeof input[i].tags)
+            // console.log("mysql: " + typeof data[j].tags)
+          }
 
         }
       }

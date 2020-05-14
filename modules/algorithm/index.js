@@ -38,7 +38,8 @@ class Algorithm extends Extend{
         created:  input[i].created,
         modified: input[i].modified,
         updated:  input[i].updated,
-        added:    input[i].added
+        added:    input[i].added,
+        tags:     input[i].tags
       }
 
       let viewScale = []
@@ -63,29 +64,49 @@ class Algorithm extends Extend{
     const flickrScaleMax = Math.max(...this.data.map(o => o.flickrScale))
     const flickrScaleMin = Math.min(...this.data.map(o => o.flickrScale))
 
+    for(let i = 0; i < this.data.length; i++) { // Tags
+      this.data[i].tagVal = 0
+      for(let j = 0; j < this.data[i].tags.length; j++) {
+        if(this.data[i].tags[j] == "A5") this.data[i].tagVal += 1
+        if(this.data[i].tags[j] == "A4") this.data[i].tagVal += 1
+        if(this.data[i].tags[j] == "A3") this.data[i].tagVal += 1
+
+        if(this.data[i].tags[j] == "India") this.data[i].tagVal += 1
+        if(this.data[i].tags[j] == "Nepal") this.data[i].tagVal += 1
+        if(this.data[i].tags[j] == "South Korea") this.data[i].tagVal += 1
+      }
+    }
+
+    const tagsMax   = Math.max(...this.data.map(o => o.tagVal))
+    const tagsMin   = Math.min(...this.data.map(o => o.tagVal))
+
     for(let i = 0; i < this.data.length; i++) {
 
-      // created
-      const a = Math.map(this.data[i].created, createdMin, createdMax, 0.5, 1)
+      let rithm = []
+
+      // date
+      const dateCreated = Math.map(this.data[i].created, createdMin, createdMax, 0.5, 1)      // Date created
+      // const dateAdded = Math.map(this.data[i].added, addedMin, addedMax, 0.25, 1)              // Date added
+      // const date = (dateCreated + dateAdded) / 2
+      rithm.push( Math.pow(dateCreated, 1) )
+
 
       // views
-      // const b = Math.map(this.data[i].views_mysql.length, viewsMin, viewsMax, 0, 1)
-      const b = Math.map(this.data[i].viewScale, viewScaleMin, viewScaleMax, 0, 1)
+      const views = Math.map(this.data[i].viewScale, viewScaleMin, viewScaleMax, 0, 1)        // Site Views
+      rithm.push( Math.pow(views, 1) )
 
-      // flickr views
-      // const c = Math.map(this.data[i].views_flickr.length, viewsFlickrMin, viewsFlickrMax, 0, 1)
-      const c = Math.map(this.data[i].flickrScale, flickrScaleMin, flickrScaleMax, 0, 1)
+      // flickr
+      const flickr = Math.map(this.data[i].flickrScale, flickrScaleMin, flickrScaleMax, 0, 1)  // flickr Views
+      rithm.push( Math.pow(flickr, 1) )
 
-      // const result = (Math.pow(a, 1/200) + Math.pow(b, 1) * 4 + Math.pow(c, 1) * 4) / 9 //
-      const result = (a * 0.1) + (Math.pow(b, 0.8) * 0.45) + (Math.pow(c, 0.4) * 0.45)
+      // tags
+      const tags = Math.map(this.data[i].tagVal, tagsMin, tagsMax, 0, 1)                       // Tags
+      rithm.push( Math.pow(tags, 1) )
+
+      const result = rithm.reduce( (a,b) => a + b ) / rithm.length
       this.data[i].algorithm = Math.round(result * 10000000000) / 10000000000 //
 
     }
-
-    const algorithmMax = Math.max(...this.data.map(o => o.algorithm))
-    const algorithmMin = Math.min(...this.data.map(o => o.algorithm))
-
-    console.log("Min: " + algorithmMin + " Max: " + algorithmMax)
 
   }
 }
