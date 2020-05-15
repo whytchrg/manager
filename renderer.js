@@ -1,8 +1,7 @@
 
 const dotenv = require('dotenv').config()
-const pjson  = require('./package.json')
+const { ipcRenderer } = require('electron')
 
-const Wtc     = require('./modules/wtc')
 const Display = require('./modules/display')
 
     // const Analyse = require('./modules/analysis').Analysis
@@ -19,31 +18,12 @@ const Display = require('./modules/display')
     //
     // console.log('saturation: ' + analysis.saturation())
 
-let wtc = new Wtc({
-  path:       process.env.LOCAL, // path to local directory
-  display:    '.display',        // display directory
-  thumbnails: '.thumbnail',      // thumbnail directory
-  extension:  '.png',            // preview file extension
-
-  url:        process.env.MONGO,
-  db:         pjson.name,                                 // APP name
-  collection: process.env.LOCAL.match(/([^\/]*)\/*$/)[1], // Directory name
-  remote:     './public_html/src/' + process.env.LOCAL.match(/([^\/]*)\/*$/)[1] + '/',
-  ftphost:    process.env.FTP_HST,
-  ftpport:    process.env.FTP_PRT,
-  ftpuser:    process.env.FTP_USR,
-  ftppass:    process.env.FTP_KEY,
-  http:       process.env.HTTP,
-  userid:     process.env.FLICKR_USER_ID,
-  apikey:     process.env.FLICKR_API_KEY
-})
-
 let display = new Display({ // Display
   path:       process.env.LOCAL,
   thumbnails: '.thumbnail',
   extension:  '.png'
 })
 
-wtc.on('display', (data) => { // Mysql init
+ipcRenderer.on('display', (event, data) => {
   display.init(data)
 })

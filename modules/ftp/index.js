@@ -28,28 +28,18 @@ class Ftp extends Extend {
       keepalive: 20000,
       secureOptions: { rejectUnauthorized: false }
     }
-    this.client     = new ftpClient()
+    this.client = new ftpClient()
 
     this.data = []
 
-    this.init(options)
   } // constructor
 
-  init(options) {
+  init() {
     const start = Date.now()
 
-    const properties = {
-      host: options.ftphost,
-      port: options.ftpport,
-      user: options.ftpuser,
-      password: options.ftppass,
-      secure: true,
-      passvTimeout: 20000,
-      keepalive: 20000,
-      secureOptions: { rejectUnauthorized: false }
-    }
+    // const properties = this.options
 
-    this.client.connect(properties)
+    this.client.connect(this.options )
     this.client.on('ready', () => {
       this.client.mkdir(this.remote, true, (err) => {
         if (err) throw err

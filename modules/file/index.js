@@ -12,15 +12,16 @@ class File extends Extend {
     this.icon   = '𝔽  -  '
     this.module = this.constructor.name
 
+    this.path = options.path
+
     this.data = []
 
-    this.init(options)
   }
 
-  init(options) {
+  init() {
     const start = Date.now()
     let ready = false
-    const chokidar = Chokidar.watch(options.path, {ignored: /(^|[\/\\])\../})
+    const chokidar = Chokidar.watch(this.path, {ignored: /(^|[\/\\])\../})
 
     chokidar.on('ready', () => {
       ready = true

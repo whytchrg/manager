@@ -20,7 +20,7 @@ class Mongo extends Extend {
     this.display    = options.display    // Display directory
     this.thumbnails = options.thumbnails // Thumbnail directory
     this.extension  = options.extension  // Display & Thumbnail file extension
-
+    this.options    = options
     // Settings
     this.dsplyShort = 600 // Display short side
     this.thumbShort = 100 // Thumbnail short side
@@ -30,13 +30,13 @@ class Mongo extends Extend {
 
     this.data = []
 
-    this.init(options)
   }
 
-  async init(options) {
+  async init() {
+
     const start = Date.now()
 
-    await this.mongoConnect(options)
+    await this.mongoConnect(this.options)
     const raw = await this.mongoAll()
 
     await this.dataInit(raw)

@@ -25,7 +25,6 @@ class Mysql extends Extend {
 
     this.data  = []
 
-    this.init()
   }
 
   async init() {
