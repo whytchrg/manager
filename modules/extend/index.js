@@ -20,9 +20,7 @@ class Extend extends Events {
   dataUnlink(data) {
     for(let i = 0; i < this.data.length; i++) {
       if(this.data[i].filename === data.filename) {
-
         this.data.splice(i, 1)
-
         return true
       }
     }
@@ -46,6 +44,23 @@ class Extend extends Events {
     return (n === 1 ? n + ' ' + name : n + ' ' + name + 's');
   }
 
+  // NEW
+  plural(name, n) {
+    return (n === 1 ? n + ' ' + name : n + ' ' + name + 's');
+  }
+  project(value, istart, istop, ostart, ostop) {
+  	return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
+  }
+
+  // this.data functions
+  unlink(data) {
+    for(let i = 0; i < this.data.length; i++) {
+      if(this.data[i].filename === data.filename) {
+        this.data.splice(i, 1)
+        return true
+      }
+    }
+  } // unlink
 }
 
 module.exports = Extend

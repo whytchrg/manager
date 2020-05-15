@@ -1,5 +1,4 @@
 const Extend   = require('../extend')
-require('../math')
 
 class Algorithm extends Extend{
 
@@ -13,7 +12,7 @@ class Algorithm extends Extend{
   }
 
   rithm(input) {
-    console.log(this.icon + this.countName(this.module, input.length) + ' to compute!')
+    console.log(this.icon + this.plural(this.module, input.length) + ' to compute!')
 
     const now = new Date().getTime() / 1000
 
@@ -85,22 +84,22 @@ class Algorithm extends Extend{
       let rithm = []
 
       // date
-      const dateCreated = Math.map(this.data[i].created, createdMin, createdMax, 0.5, 1)      // Date created
+      const dateCreated = this.project(this.data[i].created, createdMin, createdMax, 0.5, 1)      // Date created
       // const dateAdded = Math.map(this.data[i].added, addedMin, addedMax, 0.25, 1)              // Date added
       // const date = (dateCreated + dateAdded) / 2
       rithm.push( Math.pow(dateCreated, 1) )
 
 
       // views
-      const views = Math.map(this.data[i].viewScale, viewScaleMin, viewScaleMax, 0, 1)        // Site Views
+      const views = this.project(this.data[i].viewScale, viewScaleMin, viewScaleMax, 0, 1)        // Site Views
       rithm.push( Math.pow(views, 1) )
 
       // flickr
-      const flickr = Math.map(this.data[i].flickrScale, flickrScaleMin, flickrScaleMax, 0, 1)  // flickr Views
+      const flickr = this.project(this.data[i].flickrScale, flickrScaleMin, flickrScaleMax, 0, 1)  // flickr Views
       rithm.push( Math.pow(flickr, 1) )
 
       // tags
-      const tags = Math.map(this.data[i].tagVal, tagsMin, tagsMax, 0, 1)                       // Tags
+      const tags = this.project(this.data[i].tagVal, tagsMin, tagsMax, 0, 1)                       // Tags
       rithm.push( Math.pow(tags, 1) )
 
       const result = rithm.reduce( (a,b) => a + b ) / rithm.length

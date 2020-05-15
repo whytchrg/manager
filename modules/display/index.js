@@ -1,13 +1,11 @@
 
 "use strict"
 
-const Extend = require('../extend')
 const Tinysort = require('tinysort')
 
-class Display extends Extend {
+class Display{
 
   constructor(options) {
-    super()
 
     this.path       = options.path
     this.thumbnails = options.thumbnails

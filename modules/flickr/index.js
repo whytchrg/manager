@@ -25,7 +25,7 @@ class Flickr extends Extend {
     this.data = await this.publicPhotos(options)
 
     // console.log(this.data[0])
-    console.log(this.icon + this.countName(this.module, this.data.length) + ' / ' + (Date.now() - start) / 1000 + ' seconds')
+    console.log(this.icon + this.plural(this.module, this.data.length) + ' / ' + this.plural('second', ((Date.now() - start) / 1000)) )
     this.emit('init')
   } // init
 
@@ -48,7 +48,7 @@ class Flickr extends Extend {
             per_page: 500
           }).then((result) => {
             result.body.photos.photo.forEach((element) => {
-              const data = this.metaData(element)
+              const data = this.metadata(element)
               raw.push(data)
             })
             if(count == raw.length) {
@@ -65,8 +65,7 @@ class Flickr extends Extend {
     })
   }
 
-  metaData(raw) {
-
+  metadata(raw) {
     const data = {
       name: raw.title,
       added: parseInt(raw.dateupload, 10),
@@ -76,24 +75,23 @@ class Flickr extends Extend {
       secret: raw.secret
     }
     return data
-
   } // metadata
 
-  fetch() {
-    // setTimeout(() => {
-
-    // }, 1)
-    this.data.forEach((element) => {
-      this.client.photos.getInfo({
-        photo_id: element.id,
-        secret: element.secret
-      }).then(function (result) {
-        this.flickr.push(result.body.photo)
-      }.bind(this)).catch(function (err) {
-        console.error('bonk', err)
-      })
-    })
-  } // fetch
+  // fetch() {
+  //   // setTimeout(() => {
+  //
+  //   // }, 1)
+  //   this.data.forEach((element) => {
+  //     this.client.photos.getInfo({
+  //       photo_id: element.id,
+  //       secret: element.secret
+  //     }).then(function (result) {
+  //       this.flickr.push(result.body.photo)
+  //     }.bind(this)).catch(function (err) {
+  //       console.error('bonk', err)
+  //     })
+  //   })
+  // } // fetch
 
 } // Flickr
 
