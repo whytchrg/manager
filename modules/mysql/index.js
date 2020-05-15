@@ -121,6 +121,10 @@ class Mysql extends Extend {
     })
   } // delete
 
+  check() {
+
+  } // check
+
   makeInsert(file) {
 
     return {
@@ -133,7 +137,7 @@ class Mysql extends Extend {
       thumbnail: this.thumb + file.filename.split('.').slice(0, -1).join('.') + this.extension,
       orientation: file.orientation
     }
-  }
+  } // makeInsert
 
   dataUpdate(file) {
     this.data.forEach(function(data, index) {
@@ -141,7 +145,7 @@ class Mysql extends Extend {
         this.data[index] = file
       }
     }.bind(this))
-  } // offData END !!
+  } // dataUpdate
 
   dataUnlink(file) {
     this.data.forEach(function(data, index) {
@@ -149,7 +153,7 @@ class Mysql extends Extend {
         this.data.splice(index, 1)
       }
     }.bind(this))
-  } // offData END !!
+  } // dataUnlink
 
   metadata(raw) {
 
@@ -198,7 +202,7 @@ class Mysql extends Extend {
       this.data.push(data)
     }
     return true
-  } // unlink
+  } // dataInit
 
   // ----- mysql methods
 
@@ -209,7 +213,7 @@ class Mysql extends Extend {
         resolve(body)
       })
     })
-  } // request
+  } // mysqlRequest
 
 }
 
