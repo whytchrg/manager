@@ -7,6 +7,8 @@ const exiftool = require("exiftool-vendored").exiftool
 const gm       = require('gm')
 const fs       = require('fs')
 
+const Analyse = require('../analysis').Analysis
+
 class Mongo extends Extend {
 
   constructor(options) { // path, display, thumbnails, extension
@@ -57,7 +59,7 @@ class Mongo extends Extend {
       data.views_flickr = []
       data.views_mysql = []
       data.added = Math.floor(new Date().getTime() / 1000)
-      data.modified = new Date().getTime()
+      // data.modified = new Date().getTime()
       await Promise.all([this.dataPush(data), this.mongoInsert(data), this.preview(data)])
     }
 
@@ -87,7 +89,7 @@ class Mongo extends Extend {
     if (file.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('File', file.length))
 
     for (var i = 0; i < file.length; i++) {
-      const data   = await this.exif(file[i])
+      const data = await this.exif(file[i])
 
       // console.log(data.created + ' created *')
       // console.log(data.modified + ' modified *')
@@ -157,7 +159,7 @@ class Mongo extends Extend {
 
   async updateAlgorithm(select) {
     console.log(this.icon + this.countName(this.module, select.length) + ' to update from Algorithm')
-    if (select.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('Mysql', select.length))
+    if (select.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('Algorithm', select.length))
 
     for (var i = 0; i < select.length; i++) {
       const file   = select[i]
@@ -175,7 +177,44 @@ class Mongo extends Extend {
     return true
   } // updateMysql
 
-  //
+  async updateAnalysis(select) {
+    console.log(this.icon + this.countName(this.module, select.length) + ' to update after Analysis')
+    if (select.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('Analysi', select.length))
+
+    for (var i = 0; i < select.length; i++) {
+      const file   = select[i]
+
+      const search = { filename: file.filename }
+      const update = {
+        brightness: file.brightness,
+        saturation: file.saturation
+      }
+      const query = { $set: update }
+
+      await Promise.all([this.dataAnalysis(file), this.mongoUpdate(search, query)])
+    }
+
+    if (select.length > 0) console.log(this.icon + this.module + ' updated // ' + this.countName('Analysi', select.length) + ' √')
+    return true
+  } // updateAnalysis
+
+  analyse() {
+    let lysis = []
+    for(let i = 0; i < this.data.length; i++) {
+      if(this.data[i].brightness === -1 && this.data[i].saturation === -1) {
+
+        const analysis = new Analyse(this.path + this.thumbnails + '/' + this.data[i].filename.split('.').slice(0, -1).join('.') + this.extension)
+        const b = analysis.brightness()
+        const s = analysis.saturation()
+        lysis.push({
+            filename: this.data[i].filename,
+            brightness: b,
+            saturation: s
+        })
+      }
+    }
+    return lysis
+  } // check
 
   exif(data) {
     return new Promise((resolve, reject) => {
@@ -280,6 +319,9 @@ class Mongo extends Extend {
 
   metadata(raw) {
 
+    if(!raw.brightness) raw.brightness = -1
+    if(!raw.saturation) raw.saturation = -1
+
     if(!Array.isArray(raw.views_flickr)) {
       raw.views_flickr = []
     }
@@ -298,6 +340,8 @@ class Mongo extends Extend {
       created:      raw.created,
       modified:     raw.modified,
       updated:      raw.updated,
+      brightness:   raw.brightness,
+      saturation:   raw.saturation,
       added: added,
       views_flickr: raw.views_flickr,
       views_mysql: raw.views_mysql,
@@ -356,6 +400,18 @@ class Mongo extends Extend {
       if(this.data[i].filename === file.filename) {
 
         this.data[i].algorithm = file.algorithm
+
+        return true
+      }
+    }
+  } // dataAlgorithm
+
+  dataAnalysis(file) {
+    for(let i = 0; i < this.data.length; i++) {
+      if(this.data[i].filename === file.filename) {
+
+        this.data[i].brightness = file.brightness
+        this.data[i].saturation = file.saturation
 
         return true
       }

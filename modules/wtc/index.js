@@ -137,15 +137,19 @@ class Wtc extends Comparison {
     if(this.fileInit && this.mongoInit && !this.dataProgress) {
       console.log('----- data') // Mongo = base
 
-      const newFiles  = this.newFiles(this.mongo.data, this.file.data)    // new Files       | mongo, file   => file
-      const oldFiles  = this.oldFiles(this.mongo.data, this.file.data)    // Files to delete | mongo, file   => file
-      const modFiles  = this.modFiles(this.mongo.data, this.file.data)    // modified Files  | mongo, file   => file
+      const newFiles = this.newFiles(this.mongo.data, this.file.data)    // new Files       | mongo, file   => file
+      const oldFiles = this.oldFiles(this.mongo.data, this.file.data)    // Files to delete | mongo, file   => file
+      const modFiles = this.modFiles(this.mongo.data, this.file.data)    // modified Files  | mongo, file   => file
 
       await Promise.all([newFiles, oldFiles, modFiles])
 
       if(newFiles.length + oldFiles.length + modFiles.length > 0) this.dataProgress = true
 
       await Promise.all([this.mongo.insert(newFiles), this.mongo.updateFile(modFiles), this.mongo.delete(oldFiles)])
+
+      const analysis = await this.mongo.analyse()
+      await this.mongo.updateAnalysis(analysis)
+
       this.dataInit = true
       console.log('----- data √') // Mongo = base
 
