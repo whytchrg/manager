@@ -12,25 +12,20 @@ class Display{
     this.extension  = options.extension
     this.thumbSize  = 62
 
+    this.data = []
   } // constructor
 
   init(data) {
     // console.log(data[0])
 
-    document.getElementById('loader').style.display = 'block'
-
     const main = document.querySelector('body main')
-    let article = main.querySelectorAll('article')
 
-    for(let i = 0; i < article.length; i++) {
-      article[i].parentNode.removeChild(article[i])
+    let x = main.querySelectorAll('article') // cler main
+    for(let i = 0; i < x.length; i++) {
+      x[i].parentNode.removeChild(x[i])
     }
 
     const raw = document.querySelector('body main template').content.querySelector('article')
-
-    let loaded = []
-
-    // console.log(raw)
     for(let i = 0; i < data.length; i++) {
       const template = document.importNode(raw, true)
 
@@ -49,8 +44,7 @@ class Display{
       template.dataset.views       = data[i].views_mysql.length
       template.dataset.flickrViews = data[i].views_flickr.length
       template.dataset.orientation = data[i].orientation
-      template.classList.add('isvisible')
-      template.classList.add('hidden')
+
       template.style.borderBottom = '1px solid #aaa'
       template.style.marginBottom = '4px'
 
@@ -64,28 +58,18 @@ class Display{
 
       table.rows[0].cells[0].style.width = width + 'px';
 
-      loaded.push(img.onload = () => { return true })
-
       img.src = this.path + this.thumbnails + '/' + data[i].filename.split('.').slice(0, -1).join('.') + this.extension
       // img.style.maxWidth  = '100px'
       img.style.maxHeight = height + 'px'
 
       main.appendChild(template)
-
+      // this.data.push(template)
     }
 
-    article = main.querySelectorAll('article')
+    const article = main.querySelectorAll('article')
 
     tinysort.defaults.order = 'desc'
     tinysort(article ,{ data: 'created' })
-
-    Promise.all(loaded)
-      .then(() => {
-        for(let i = 0; i < article.length; i++) {
-          article[i].classList.add('isvisible')
-        }
-        document.getElementById('loader').style.display = 'none'
-      })
 
   } // init
 

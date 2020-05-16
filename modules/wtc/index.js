@@ -90,7 +90,7 @@ class Wtc extends Comparison {
     this.file.on('init', () => { // File init
       setTimeout(() => {
         this.fileInit = true
-        this.data()
+        this.fileEval()
       }, this.randomInt(10, 100))
     })
 
@@ -98,7 +98,7 @@ class Wtc extends Comparison {
     this.mongo.on('init', () => { // Mongo init
       setTimeout(() => {
         this.mongoInit = true
-        this.data()
+        this.fileEval()
       }, this.randomInt(10, 100));
     })
 
@@ -129,11 +129,17 @@ class Wtc extends Comparison {
 
   } // init
 
+  data() {
+    let data = []
+    if(this.dataInit) data = this.mongo.data
+    return data
+  } // display
+
   display() {
     this.emit('display', this.mongo.data)
   } // display
 
-  async data() {
+  async fileEval() {
     if(this.fileInit && this.mongoInit && !this.dataProgress) {
       console.log('----- data') // Mongo = base
 
@@ -159,7 +165,7 @@ class Wtc extends Comparison {
 
       if(this.dataProgress) {
         this.dataProgress = false
-        this.data()
+        this.fileEval()
       }
     }
   } // data

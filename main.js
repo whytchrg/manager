@@ -1,4 +1,4 @@
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 const {spawn} = require('child_process')
 const dotenv = require('dotenv').config()
 const pjson  = require('./package.json')
@@ -65,5 +65,10 @@ let wtc = new Wtc({
 wtc.init()
 
 wtc.on('display', (data) => {
+  mainWindow.webContents.send('display', data)
+})
+
+ipcMain.on('get', () => {
+  let data = wtc.data()
   mainWindow.webContents.send('display', data)
 })
