@@ -7,7 +7,7 @@ const exiftool = require("exiftool-vendored").exiftool
 const gm       = require('gm')
 const fs       = require('fs')
 
-const Analyse = require('../analysis')
+const Analyse = require('analysis')
 
 class Mongo extends Extend {
 
