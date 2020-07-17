@@ -7,7 +7,7 @@ const exiftool = require("exiftool-vendored").exiftool
 const gm       = require('gm')
 const fs       = require('fs')
 
-const Analyse = require('../analysis').Analysis
+const Analyse = require('../analysis')
 
 class Mongo extends Extend {
 
@@ -425,6 +425,7 @@ class Mongo extends Extend {
       const client = new mongodb(options.url, {
         poolSize: 10,
         useNewUrlParser: true,
+        useUnifiedTopology: true,
         connectTimeoutMS: 300000
       })
       client.connect((err, connect) => {

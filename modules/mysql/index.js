@@ -17,7 +17,7 @@ class Mysql extends Extend {
     this.thumb = '.thumbnail/'
 
     this.httpRequest = {
-        url: options.http + "request/",
+        url: options.http + "request.php",
         method: "POST",
         json: true
     }
@@ -209,7 +209,7 @@ class Mysql extends Extend {
   mysqlRequest(query) {
     return new Promise((resolve, reject) => {
       request(query, (error, response, body) => {
-        // console.log(response)
+        //console.log(response)
         resolve(body)
       })
     })

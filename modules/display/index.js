@@ -68,8 +68,10 @@ class Display{
 
     const article = main.querySelectorAll('article')
 
-    tinysort.defaults.order = 'desc'
-    tinysort(article ,{ data: 'created' })
+    if(data.length > 0) {
+      tinysort.defaults.order = 'desc'
+      tinysort(article ,{ data: 'created' })
+    }
 
   } // init
 

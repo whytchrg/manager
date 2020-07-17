@@ -1,4 +1,4 @@
 
-const Analysis = require('./build/Release/analysis.node')
+const Analysis = require('./build/Release/analysis.node').Analysis
 
 module.exports = Analysis

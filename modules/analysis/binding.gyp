@@ -12,7 +12,6 @@
         ],
         "sources": [
             "cpp/main.cpp",
-            "cpp/functions.cpp",
             "cpp/analysis.cpp",
             "cpp/analyse.cpp"
         ],
