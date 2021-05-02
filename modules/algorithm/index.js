@@ -1,3 +1,4 @@
+
 const Extend   = require('../extend')
 
 class Algorithm extends Extend{
@@ -70,9 +71,20 @@ class Algorithm extends Extend{
         if(this.data[i].tags[j] == "A4") this.data[i].tagVal += 1
         if(this.data[i].tags[j] == "A3") this.data[i].tagVal += 1
 
+        // if(this.data[i].tags[j] == "Japan") this.data[i].tagVal -= 1
+        if(this.data[i].tags[j] == "Egypt") this.data[i].tagVal += 1
         if(this.data[i].tags[j] == "India") this.data[i].tagVal += 1
         if(this.data[i].tags[j] == "Nepal") this.data[i].tagVal += 1
         if(this.data[i].tags[j] == "South Korea") this.data[i].tagVal += 1
+
+        // if(this.data[i].tags[j] == "Katharina Trudzinski") this.data[i].tagVal += 1
+        if(this.data[i].tags[j] == "Céline Vahsen") this.data[i].tagVal += 1.5
+        // if(this.data[i].tags[j] == "hui-hui") this.data[i].tagVal -= 0.5
+
+        if(this.data[i].tags[j] == "home") this.data[i].tagVal -= 1
+        if(this.data[i].tags[j] == "Photogram") this.data[i].tagVal += 1
+
+        if(this.data[i].tags[j] == "x") this.data[i].tagVal -= 2
       }
     }
 
@@ -85,10 +97,9 @@ class Algorithm extends Extend{
 
       // date
       const dateCreated = this.project(this.data[i].created, createdMin, createdMax, 0.5, 1)      // Date created
-      // const dateAdded = Math.map(this.data[i].added, addedMin, addedMax, 0.25, 1)              // Date added
+      // const dateAdded = this.project(this.data[i].added, addedMin, addedMax, 0.25, 1)              // Date added
       // const date = (dateCreated + dateAdded) / 2
       rithm.push( Math.pow(dateCreated, 1) )
-
 
       // views
       const views = this.project(this.data[i].viewScale, viewScaleMin, viewScaleMax, 0, 1)        // Site Views
@@ -103,7 +114,7 @@ class Algorithm extends Extend{
       rithm.push( Math.pow(tags, 1) )
 
       const result = rithm.reduce( (a,b) => a + b ) / rithm.length
-      this.data[i].algorithm = Math.round(result * 10000000000) / 10000000000 //
+      this.data[i].algorithm = Math.round(result * 1024) //
 
     }
 

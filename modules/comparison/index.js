@@ -173,6 +173,13 @@ class Comparison extends Events{
             // console.log(input[i].filename + " algorithm")
             // console.log("input: " + input[i].algorithm + " data: " + data[j].algorithm)
           }
+
+          if(input[i].description == undefined) input[i].description = ""
+          if(input[i].description != data[j].description) {
+            test = true
+            console.log(input[i].filename + " description")
+            console.log("input: " + input[i].description + " data: " + data[j].description)
+          }
           if(JSON.stringify(input[i].tags) !== JSON.stringify(data[j].tags)) {
             test = true
             // console.log(input[i].filename + " tags")

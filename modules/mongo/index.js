@@ -101,6 +101,7 @@ class Mongo extends Extend {
         modified: data.modified,
         created: data.created,
         updated: data.updated,
+        description: data.description,
         tags: data.tags,
         orientation: data.orientation,
         width: data.width,
@@ -258,8 +259,11 @@ class Mongo extends Extend {
             updated = updated.getTime() + offsetM * 60000
           }
 
+          let description = tags.Description
+
           data.created     = created
           data.updated     = updated
+          data.description = description
           data.tags        = tags.Keywords
           data.orientation = tags.ImageWidth > tags.ImageHeight ? 'landscape' : 'portrait'
           data.width       = tags.ImageWidth
@@ -346,6 +350,7 @@ class Mongo extends Extend {
       views_flickr: raw.views_flickr,
       views_mysql: raw.views_mysql,
       algorithm: raw.algorithm,
+      description: raw.description,
       tags: raw.tags,
       orientation: raw.orientation,
       width: raw.width,
@@ -362,6 +367,7 @@ class Mongo extends Extend {
         this.data[i].modified    = data.modified
 
         this.data[i].created     = data.created
+        this.data[i].description = data.description
         this.data[i].tags        = data.tags
         this.data[i].orientation = data.orientation
         this.data[i].width       = data.width

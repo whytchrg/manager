@@ -34,6 +34,7 @@ class Mysql extends Extend {
     this.httpRequest.body.data = []
 
     const raw = await this.mysqlRequest(this.httpRequest)
+    // console.log(raw.data)
     await this.dataInit(JSON.parse(raw.data))
 
     console.log(this.icon + this.countName(this.module, this.data.length)  + ' / ' + (Date.now() - start) / 1000 + ' seconds')
@@ -111,7 +112,7 @@ class Mysql extends Extend {
         this.httpRequest.body.data    = json
 
         request(this.httpRequest, (error, response, body) => {
-          console.log(body);
+          // console.log(body);
           if(select.length != 0) {
             console.log(this.icon + this.module + ' deleted')
             resolve(true)
@@ -135,7 +136,8 @@ class Mysql extends Extend {
       tags: JSON.stringify(file.tags).replace(/[\/\(\)\']/g, "\\$&"),
       display: this.dsply + file.filename.split('.').slice(0, -1).join('.') + this.extension,
       thumbnail: this.thumb + file.filename.split('.').slice(0, -1).join('.') + this.extension,
-      orientation: file.orientation
+      orientation: file.orientation,
+      description: file.description
     }
   } // makeInsert
 
@@ -161,7 +163,8 @@ class Mysql extends Extend {
       filename: raw.filename,
       created: parseInt(raw.created, 10),
       algorithm: parseFloat(raw.algorithm),
-      orientation: raw.orientation
+      orientation: raw.orientation,
+      description: raw.description
     }
 
     let tags = []
@@ -209,7 +212,7 @@ class Mysql extends Extend {
   mysqlRequest(query) {
     return new Promise((resolve, reject) => {
       request(query, (error, response, body) => {
-        //console.log(response)
+        // console.log(body)
         resolve(body)
       })
     })
