@@ -5,11 +5,11 @@ const pjson  = require('./package.json')
 
 const Wtc     = require('./modules/wtc')
 
-const pipe = spawn('mongod') // start MongoDB
+// const pipe = spawn('mongod') // start MongoDB
 
-pipe.stdout.on('data', (data) => { /* console.log(data.toString('utf8')) */ })
-pipe.stderr.on('data', (data) => { console.log(data.toString('utf8')) })
-pipe.on('close', (code) => { /* console.log('Process exited with code: ' + code) */ })
+// pipe.stdout.on('data', (data) => { /* console.log(data.toString('utf8')) */ })
+// pipe.stderr.on('data', (data) => { console.log(data.toString('utf8')) })
+// pipe.on('close', (code) => { /* console.log('Process exited with code: ' + code) */ })
 
 let mainWindow // start Electron
 
@@ -17,13 +17,13 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 600,
-    webPreferences: { nodeIntegration: true }
+    webPreferences: { nodeIntegration: true, contextIsolation: false }
   })
   mainWindow.loadFile('./index.html')
   mainWindow.webContents.openDevTools()
   mainWindow.on('close', (e) => {
     console.log('application quit')
-    pipe.kill('SIGINT')
+    // pipe.kill('SIGINT')
   })
   mainWindow.on('closed', () => {
     mainWindow = null

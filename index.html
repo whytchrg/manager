@@ -5,7 +5,7 @@
   content="
     connect-src 'self' http://debruen.com http://whyturbocharge.com;
     style-src 'self' 'unsafe-inline' http://debruen.com;
-    script-src 'self' 'unsafe-inline' http://debruen.com
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' http://debruen.com
   ">
 
   <title>wtc</title>
@@ -56,8 +56,6 @@
     </template>
   </main>
 
-  <script>
-    require('./renderer.js')
-  </script>
+  <script src="./renderer.js"></script>
 
 </body></html>
