@@ -87,37 +87,32 @@ class Mysql extends Extend {
     // })
   } // update
 
-  delete(select) {
+  async delete(select) {
 
-    return new Promise((resolve, reject) => {
-      console.log(this.icon + this.countName(this.module, select.length) + ' to delete from Files')
-      if(select.length == 0) {
-        resolve(true)
-      } else {
+    console.log(this.icon + this.countName(this.module, select.length) + ' to delete from Files')
 
-        let data = {} // create object with index
-        select.forEach(function(file, index, array) {
-          if(index === 0) {
-            console.log(this.icon + this.module + ' delete')
-          }
-          this.dataUnlink(file)
-          const insert = { filename: file.filename }
-          data[index] = insert
-        }.bind(this))
-        const json = JSON.stringify(data)
+    if(select.length > 0) {
 
-        this.message.request = 'delete'
-        this.message.data    = json
+      let data = {} // create object with index
+      select.forEach(function(file, index, array) {
+        if(index === 0) {
+          console.log(this.icon + this.module + ' delete')
+        }
+        this.dataUnlink(file)
+        const insert = { filename: file.filename }
+        data[index] = insert
+      }.bind(this))
 
-        request(this.message, (error, response, body) => {
-          // console.log(body);
-          if(select.length != 0) {
-            console.log(this.icon + this.module + ' deleted')
-            resolve(true)
-          }
-        })
-      }
-    })
+      const json = JSON.stringify(data)
+
+      this.message.request = 'delete'
+      this.message.data    = json
+      await this.request(this.message)
+
+      console.log(this.icon + this.module + ' delete // ' + this.countName('Mysql', select.length) + ' √')
+    }
+
+    return true
   } // delete
 
   check() {
