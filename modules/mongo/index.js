@@ -31,7 +31,6 @@ class Mongo extends Extend {
     this.collection
 
     this.data = []
-
   }
 
   async init() {
