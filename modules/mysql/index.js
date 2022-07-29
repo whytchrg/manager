@@ -1,8 +1,9 @@
 
 "use strict"
 
+const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const Extend  = require('../extend')
-const request = require('request')
+// const request = require('request')
 
 class Mysql extends Extend {
 
@@ -16,12 +17,9 @@ class Mysql extends Extend {
     this.dsply = '.display/'
     this.thumb = '.thumbnail/'
 
-    this.httpRequest = {
-        url: options.http + "request.php",
-        method: "POST",
-        json: true
-    }
-    this.httpRequest.body = { client: options.db, table: options.table }
+    this.url = options.http
+
+    this.message = { client: options.db, table: options.table }
 
     this.data  = []
 
@@ -30,12 +28,12 @@ class Mysql extends Extend {
   async init() {
     const start = Date.now()
 
-    this.httpRequest.body.request = 'init'
-    this.httpRequest.body.data = []
+    this.message.request = 'init'
+    this.message.data = []
 
-    const raw = await this.mysqlRequest(this.httpRequest)
-    // console.log(raw.data)
-    await this.dataInit(JSON.parse(raw.data))
+    const raw = await this.request(this.message)
+    // console.log(raw)
+    await this.dataInit(raw)
 
     console.log(this.icon + this.countName(this.module, this.data.length)  + ' / ' + (Date.now() - start) / 1000 + ' seconds')
     this.emit('init') // emit when done
@@ -52,10 +50,10 @@ class Mysql extends Extend {
       await this.dataPush(mongo[i])
     }
     const json = await JSON.stringify(data)
-    this.httpRequest.body.request = 'insert'
-    this.httpRequest.body.data    = json
+    this.message.request = 'insert'
+    this.message.data    = json
 
-    await this.mysqlRequest(this.httpRequest)
+    await this.request(this.message)
 
     if (mongo.length > 0) console.log(this.icon + this.module + ' insert // ' + this.countName('Mongo', mongo.length) + ' √')
     return true
@@ -79,47 +77,42 @@ class Mysql extends Extend {
     // console.log(data[0])
 
     const json = await JSON.stringify(data)
-    this.httpRequest.body.request = 'update'
-    this.httpRequest.body.data    = json
+    this.message.request = 'update'
+    this.message.data    = json
 
-    await this.mysqlRequest(this.httpRequest)
+    await this.request(this.message)
 
     if (select.length > 0) console.log(this.icon + this.module + ' update // ' + this.countName('Mongo', select.length) + ' √')
     return true
     // })
   } // update
 
-  delete(select) {
+  async delete(select) {
 
-    return new Promise((resolve, reject) => {
-      console.log(this.icon + this.countName(this.module, select.length) + ' to delete from Files')
-      if(select.length == 0) {
-        resolve(true)
-      } else {
+    console.log(this.icon + this.countName(this.module, select.length) + ' to delete from Files')
 
-        let data = {} // create object with index
-        select.forEach(function(file, index, array) {
-          if(index === 0) {
-            console.log(this.icon + this.module + ' delete')
-          }
-          this.dataUnlink(file)
-          const insert = { filename: file.filename }
-          data[index] = insert
-        }.bind(this))
-        const json = JSON.stringify(data)
+    if(select.length > 0) {
 
-        this.httpRequest.body.request = 'delete'
-        this.httpRequest.body.data    = json
+      let data = {} // create object with index
+      select.forEach(function(file, index, array) {
+        if(index === 0) {
+          console.log(this.icon + this.module + ' delete')
+        }
+        this.dataUnlink(file)
+        const insert = { filename: file.filename }
+        data[index] = insert
+      }.bind(this))
 
-        request(this.httpRequest, (error, response, body) => {
-          // console.log(body);
-          if(select.length != 0) {
-            console.log(this.icon + this.module + ' deleted')
-            resolve(true)
-          }
-        })
-      }
-    })
+      const json = JSON.stringify(data)
+
+      this.message.request = 'delete'
+      this.message.data    = json
+      await this.request(this.message)
+
+      console.log(this.icon + this.module + ' delete // ' + this.countName('Mysql', select.length) + ' √')
+    }
+
+    return true
   } // delete
 
   check() {
@@ -209,14 +202,33 @@ class Mysql extends Extend {
 
   // ----- mysql methods
 
-  mysqlRequest(query) {
-    return new Promise((resolve, reject) => {
-      request(query, (error, response, body) => {
-        // console.log(body)
-        resolve(body)
-      })
-    })
-  } // mysqlRequest
+request(request) {
+  return new Promise((resolve, reject) => {
+
+    const json = JSON.stringify(request)
+    let xhttp = new XMLHttpRequest()
+    xhttp.onreadystatechange = () => {
+      if (xhttp.readyState == 4 && xhttp.status == 200) {
+
+        const response = JSON.parse(JSON.parse(xhttp.responseText).data)
+
+        resolve(response)
+      }
+    }
+    xhttp.open("POST", this.url + "request.php", true) // change url here
+    xhttp.setRequestHeader("Content-Type", "application/json")
+    xhttp.send(json)
+  })
+} // request
+
+  // mysqlRequest(query) {
+  //   return new Promise((resolve, reject) => {
+  //     request(query, (error, response, body) => {
+  //       // console.log(body)
+  //       resolve(body)
+  //     })
+  //   })
+  // } // mysqlRequest
 
 }
 
