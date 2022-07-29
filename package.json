@@ -10,7 +10,7 @@
   "author": "whyturbocharge <44509713+whyturbocharge@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
-    "analysis": "../analysis",
+    "analysis": "../../modules/analysis",
     "chokidar": "^3.5.2",
     "dotenv": "^10.0.0",
     "electron": "^13.1.4",
