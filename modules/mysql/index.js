@@ -21,8 +21,7 @@ class Mysql extends Extend {
 
     this.message = { client: options.db, table: options.table }
 
-    this.data  = []
-
+    this.data = []
   }
 
   async init() {

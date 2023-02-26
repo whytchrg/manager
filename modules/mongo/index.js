@@ -4,7 +4,7 @@
 const Extend   = require('../extend')
 const mongodb  = require('mongodb').MongoClient
 const exiftool = require("exiftool-vendored").exiftool
-const gm       = require('gm').subClass({imageMagick: true});
+const gm       = require('gm').subClass({imageMagick: true})
 const fs       = require('fs')
 
 const Analyse = require('analysis')
