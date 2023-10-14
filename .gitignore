@@ -1,4 +1,10 @@
-node_modules
+__pycache__
 .DS_Store
-.env
-package-lock.json
+Miniconda3-latest-MacOSX-x86_64.sh
+*copy.py
+settings.py
+yolov3*
+insta.py
+test.py
+coco*
+*.ipynb
