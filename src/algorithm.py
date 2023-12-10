@@ -10,7 +10,7 @@ class Algorithm(Data):
     def __init__(self, presets):
         super().__init__(presets)
 
-        self.version = '0.0.0'
+        self.version = '0.0.3'
 
     def eval(self):
         data  = self.get_database()
@@ -44,17 +44,19 @@ class Algorithm(Data):
             raw_values.append(description_values[i])
             raw_values.append(tags_values[i])
             raw_values.append(views_values[i])
-            # raw_values.append(seen_values[i])
             raw_values.append(flickr_values[i])
 
             values = np.asarray(raw_values)
             resulted_value = np.sum(values) / len(raw_values)
             algorithm = round(resulted_value * 1024)
-
-            if 'algorithm' not in entry or entry['algorithm']['value'] != algorithm:
+            seen_value = round(seen_values[i] * 1024)
+            
+            if 'algorithm' not in entry or entry['algorithm']['value'] != algorithm or entry['algorithm']['version'] != self.version:
                 self.db.update({
                     'algorithm': {
-                        'value': algorithm
+                        'version': self.version,
+                        'value': algorithm,
+                        'seen_value': seen_value
                     }
                 }, self.data.name == entry['name'])
                 select.append(entry)
@@ -87,12 +89,12 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = value * 0.25
+            values[i] = value * 0.5
 
         return values
 
     def seen_eval(self, data):
-        now = round(time.time()*1000)
+        now = round(time.time() * 1000)
         added_min = self.get_added_min(data)
 
         values = np.zeros(len(data))
@@ -116,7 +118,7 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = (1 - value) * 0.25
+            values[i] = value
 
         return values
 
@@ -146,7 +148,7 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = value * 0.5
+            values[i] = value * 0.25
 
         return values
 
@@ -204,7 +206,7 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = value * 0.5
+            values[i] = value * 0.25
 
         return values
 

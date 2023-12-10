@@ -12,7 +12,7 @@ class Online(Data):
         self.table = presets['directory']
         self.api = presets['api']
 
-        self.version = '0.0.1'
+        self.version = '0.0.2'
 
     def eval(self):
         if self.get_availability():
@@ -82,8 +82,9 @@ class Online(Data):
             else:
                 remote[index]['keywords'] = json.loads(entry['keywords'])
             remote[index]['algorithm'] = float(entry['algorithm'])
+            remote[index]['seen_value'] = float(entry['seen_value'])
             views = []
-            if entry['views'] != None:
+            if entry['views'] != None and entry['views'] != '':
                 a = entry['views'].split(';')
                 for b in a:
                     c = json.loads(b)
@@ -91,6 +92,8 @@ class Online(Data):
                     c['server'] = int(c['server'])
                     if len(str(c['server'])) < 12:
                         c['server'] = float(c['server'] * 1000)
+                    else:
+                        c['server'] = float(c['server'])
                     views.append(c)
             remote[index]['views'] = views
 
@@ -103,6 +106,8 @@ class Online(Data):
                     c['server'] = int(c['server'])
                     if len(str(c['server'])) < 12:
                         c['server'] = float(c['server'] * 1000)
+                    else:
+                        c['server'] = float(c['server'])
                     seen.append(c)
 
             remote[index]['seen'] = seen
@@ -145,6 +150,8 @@ class Online(Data):
             if float(round(entry['metadata']['modified'])) > entry['online']['modified']:
                 modified.append(entry)
             elif entry['algorithm']['value'] != entry['online']['algorithm']:
+                modified.append(entry)
+            elif entry['algorithm']['seen_value'] != entry['online']['seen_value']:
                 modified.append(entry)
             elif entry['online']['version'] != self.version:
                 modified.append(entry)
@@ -200,14 +207,33 @@ class Online(Data):
         select = []
         for entry in db:
             for remote in data:
-                if entry['name'] == remote['name'] and len(entry['online']['views']) < len(remote['views']):
+                if entry['name'] == remote['name'] and len(remote['views']) > 0:
 
-                    entry['online']['views'] = remote['views']
+                    # get difference // new views
+                    new_views = []
+                    for remote_view in remote['views']:
+                        if remote_view not in entry['online']['views']:
+                            new_views.append(remote_view)
+
+                    # remove duplicates from joined list // just in case
+                    l = entry['online']['views'] + new_views
+                    seen_item = set()
+                    new_l = []
+                    for d in l:
+                        t = tuple(d.items())
+                        if t not in seen_item:
+                            seen_item.add(t)
+                            new_l.append(d)
+
+                    # replace views with result
+                    entry['online']['views'] = new_l
+
+                    # update the database
                     self.db.update({
                         'online': entry['online']
                     }, self.data.name == entry['name'])
                     select.append(entry)
-        
+
         return select
 
     def get_seen(self, data):
@@ -215,14 +241,33 @@ class Online(Data):
         select = []
         for entry in db:
             for remote in data:
-                if entry['name'] == remote['name'] and len(entry['online']['seen']) < len(remote['seen']):
+                if entry['name'] == remote['name'] and len(remote['seen']) > 0:
 
-                    entry['online']['seen'] = remote['seen']
+                    # get difference // new seen
+                    new_seen = []
+                    for remote_see in remote['seen']:
+                        if remote_see not in entry['online']['seen']:
+                            new_seen.append(remote_see)
+
+                    # remove duplicates from joined list // just in case
+                    l = entry['online']['seen'] + new_seen
+                    seen_item = set()
+                    new_l = []
+                    for d in l:
+                        t = tuple(d.items())
+                        if t not in seen_item:
+                            seen_item.add(t)
+                            new_l.append(d)
+
+                    # replace views with result
+                    entry['online']['seen'] = new_l
+
+                    # entry['online']['seen'] = remote['seen']
                     self.db.update({
                         'online': entry['online']
                     }, self.data.name == entry['name'])
                     select.append(entry)
-        
+
         return select
 
     def make_online(self, data):
@@ -246,6 +291,7 @@ class Online(Data):
             'keywords': data['metadata']['keywords'],
             'description': data['metadata']['description'],
             'algorithm': data['algorithm']['value'],
+            'seen_value': data['algorithm']['seen_value'],
             'orientation': data['preview']['orientation'],
             'display': data['preview']['images'][0],
             'medium': data['preview']['images'][1],
@@ -274,6 +320,7 @@ class Online(Data):
                 'keywords': json.dumps(entry['online']['keywords']),
                 'description': entry['online']['description'],
                 'algorithm': str(entry['online']['algorithm']),
+                'seen_value': str(entry['online']['seen_value']),
                 'orientation': entry['online']['orientation'],
                 'display': entry['online']['display'],
                 'medium': entry['online']['medium'],
