@@ -1,1 +1,1 @@
-manager for webpage
+manager for https://github.com/whytchrg/webpage
