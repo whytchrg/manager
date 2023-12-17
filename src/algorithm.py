@@ -10,7 +10,7 @@ class Algorithm(Data):
     def __init__(self, presets):
         super().__init__(presets)
 
-        self.version = '0.0.3'
+        self.version = '0.0.5'
 
     def eval(self):
         data  = self.get_database()
@@ -28,6 +28,7 @@ class Algorithm(Data):
     def calculate_algorithm(self, data):
 
         created_values     = self.created_eval(data)
+        added_values       = self.added_eval(data)
         description_values = self.description_eval(data)
         tags_values        = self.tags_eval(data)
         views_values       = self.views_eval(data)
@@ -38,9 +39,11 @@ class Algorithm(Data):
 
         i = 0
         for entry in data:
+            
             raw_values = []
 
             raw_values.append(created_values[i])
+            raw_values.append(added_values[i])
             raw_values.append(description_values[i])
             raw_values.append(tags_values[i])
             raw_values.append(views_values[i])
@@ -89,7 +92,7 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = value * 0.5
+            values[i] = value
 
         return values
 
@@ -148,7 +151,7 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = value * 0.25
+            values[i] = value
 
         return values
 
@@ -165,7 +168,24 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = value * 0.5
+            values[i] = value
+
+        return values
+
+    def added_eval(self, data):
+        values = np.zeros(len(data))
+
+        i = 0
+        for entry in data:
+            values[i] = entry['metadata']['added']
+            i += 1
+
+        min = np.min(values)
+        max = np.max(values)
+
+        for i in range(values.shape[0]):
+            value = self.project(values[i], min, max, 0, 1)
+            values[i] = value
 
         return values
 
@@ -181,6 +201,8 @@ class Algorithm(Data):
                     values[i] += 1
                 if tag == 'A3':
                     values[i] += 1
+                if tag == 'India':
+                    values[i] += 1
             i += 1
 
         min = np.min(values)
@@ -188,7 +210,7 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = value * 0.5
+            values[i] = value
 
         return values
 
@@ -206,7 +228,7 @@ class Algorithm(Data):
 
         for i in range(values.shape[0]):
             value = self.project(values[i], min, max, 0, 1)
-            values[i] = value * 0.25
+            values[i] = value
 
         return values
 
