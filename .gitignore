@@ -1,10 +1,10 @@
 __pycache__
 .DS_Store
-Miniconda3-latest-MacOSX-x86_64.sh
+Miniconda*
 *copy.py
 settings.py
 yolov3*
-insta.py
 test.py
 coco*
+.ipynb*
 *.ipynb
