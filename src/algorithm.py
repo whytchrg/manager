@@ -10,7 +10,7 @@ class Algorithm(Data):
     def __init__(self, presets):
         super().__init__(presets)
 
-        self.version = '0.0.5'
+        self.version = '0.0.7'
 
     def eval(self):
         data  = self.get_database()
@@ -29,7 +29,7 @@ class Algorithm(Data):
 
         created_values     = self.created_eval(data)
         added_values       = self.added_eval(data)
-        description_values = self.description_eval(data)
+        # description_values = self.description_eval(data)
         tags_values        = self.tags_eval(data)
         views_values       = self.views_eval(data)
         seen_values        = self.seen_eval(data)
@@ -39,12 +39,12 @@ class Algorithm(Data):
 
         i = 0
         for entry in data:
-            
+
             raw_values = []
 
-            raw_values.append(created_values[i])
-            raw_values.append(added_values[i])
-            raw_values.append(description_values[i])
+            raw_values.append(created_values[i] * 0.5)
+            raw_values.append(added_values[i] * 0.5)
+            # raw_values.append(description_values[i])
             raw_values.append(tags_values[i])
             raw_values.append(views_values[i])
             raw_values.append(flickr_values[i])
@@ -53,7 +53,7 @@ class Algorithm(Data):
             resulted_value = np.sum(values) / len(raw_values)
             algorithm = round(resulted_value * 1024)
             seen_value = round(seen_values[i] * 1024)
-            
+
             if 'algorithm' not in entry or entry['algorithm']['value'] != algorithm or entry['algorithm']['version'] != self.version:
                 self.db.update({
                     'algorithm': {
@@ -202,7 +202,13 @@ class Algorithm(Data):
                 if tag == 'A3':
                     values[i] += 1
                 if tag == 'India':
+                    values[i] += 1.5
+                if tag == 'Nepal':
                     values[i] += 1
+                if tag == 'Japan':
+                    values[i] -= 0.5
+                if tag == 'grounds':
+                    values[i] -= 0.5
             i += 1
 
         min = np.min(values)
@@ -239,11 +245,13 @@ class Algorithm(Data):
         for entry in data:
             added[i] = entry['metadata']['added']
             i += 1
-        
+
         return np.min(added)
 
     def project(self, value, istart, istop, ostart, ostop):
         if istop - istart == 0:
+
             return 0
         else:
+
             return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))

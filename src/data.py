@@ -35,7 +35,7 @@ class Data:
         self.terminated = False
         self.result = False
 
-       #  atexit.register(self.cleanup)
+        #  atexit.register(self.cleanup)
 
     # Deleting (Calling destructor)
     # def __del__(self):
